@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  userProfile: any;
   signUp: (email: string, password: string, fullName: string, role: 'student' | 'teacher') => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -20,22 +21,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Fetch user profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          setUserProfile(profile);
+        } else {
+          setUserProfile(null);
+        }
+        
         setLoading(false);
       }
     );
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        setUserProfile(profile);
+      }
+      
       setLoading(false);
     });
 
@@ -61,7 +86,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error };
       }
       
-      toast.success('تم إنشاء الحساب بنجاح! يرجى التحقق من بريدك الإلكتروني.');
+      if (role === 'student') {
+        toast.success('تم إنشاء حساب الطالب بنجاح! يمكنك البدء الآن.');
+      } else {
+        toast.success('تم إنشاء حساب المعلم بنجاح! سيتم مراجعة بياناتك من قبل المسؤول، وسيتم إشعارك عند الموافقة.');
+      }
+      
       return { error: null };
     } catch (error) {
       console.error('Sign up error:', error);
@@ -122,6 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     loading,
+    userProfile,
     signUp,
     signIn,
     signOut,

@@ -71,7 +71,13 @@ const Register = () => {
     setLoading(false);
 
     if (!error) {
-      navigate('/login');
+      if (formData.role === 'student') {
+        // Redirect students directly to the app
+        navigate('/');
+      } else {
+        // Show approval message for teachers and redirect to login
+        navigate('/teacher-pending-approval');
+      }
     }
   };
 
@@ -189,13 +195,21 @@ const Register = () => {
               >
                 <div className="flex items-center space-x-2 space-x-reverse">
                   <RadioGroupItem value="student" id="student" />
-                  <Label htmlFor="student">طالب</Label>
+                  <Label htmlFor="student">طالب - دخول فوري</Label>
                 </div>
                 <div className="flex items-center space-x-2 space-x-reverse">
                   <RadioGroupItem value="teacher" id="teacher" />
-                  <Label htmlFor="teacher">معلم</Label>
+                  <Label htmlFor="teacher">معلم - يتطلب موافقة المسؤول</Label>
                 </div>
               </RadioGroup>
+              
+              {formData.role === 'teacher' && (
+                <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                  <p className="text-sm text-amber-800">
+                    <strong>ملاحظة:</strong> سيتم مراجعة طلب إنشاء حساب المعلم من قبل المسؤول قبل الموافقة عليه.
+                  </p>
+                </div>
+              )}
             </div>
 
             <Button
