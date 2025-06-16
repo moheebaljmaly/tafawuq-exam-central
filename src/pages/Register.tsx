@@ -4,11 +4,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { GraduationCap, User, Mail, Lock, UserCheck } from "lucide-react";
-import { toast } from "sonner";
+import { GraduationCap, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -16,165 +15,204 @@ const Register = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "student",
-    agreeToTerms: false
+    role: "student" as "student" | "teacher"
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
+
+  const { signUp } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
-      toast.error("يرجى ملء جميع الحقول");
-      return;
-    }
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("كلمتا المرور غير متطابقتين");
-      return;
-    }
-    
-    if (formData.password.length < 6) {
-      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
-      return;
-    }
-    
-    if (!formData.agreeToTerms) {
-      toast.error("يجب الموافقة على شروط الاستخدام");
-      return;
+  const validateForm = () => {
+    const newErrors: string[] = [];
+
+    if (!formData.fullName.trim()) {
+      newErrors.push("الاسم الكامل مطلوب");
     }
 
-    // Mock registration - in real app, this would be an API call
-    toast.success("تم إنشاء حسابك بنجاح! مرحباً بك في تفوق");
-    navigate("/login");
+    if (!formData.email.trim()) {
+      newErrors.push("البريد الإلكتروني مطلوب");
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.push("البريد الإلكتروني غير صحيح");
+    }
+
+    if (!formData.password) {
+      newErrors.push("كلمة المرور مطلوبة");
+    } else if (formData.password.length < 6) {
+      newErrors.push("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.push("كلمتا المرور غير متطابقتين");
+    }
+
+    setErrors(newErrors);
+    return newErrors.length === 0;
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+    
+    const { error } = await signUp(
+      formData.email,
+      formData.password,
+      formData.fullName,
+      formData.role
+    );
+
+    setLoading(false);
+
+    if (!error) {
+      navigate('/login');
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+    // Clear errors when user starts typing
+    if (errors.length > 0) {
+      setErrors([]);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center mb-4">
-            <span className="text-2xl font-bold text-primary-700 mr-2">تفوق</span>
-            <GraduationCap className="h-8 w-8 text-primary-600" />
+          <div className="flex justify-center mb-4">
+            <GraduationCap className="h-12 w-12 text-primary-600" />
           </div>
-          <CardTitle className="text-2xl text-gray-900">إنشاء حساب جديد</CardTitle>
-          <p className="text-gray-600">انضم إلى منصة تفوق وابدأ رحلتك التعليمية</p>
+          <CardTitle className="text-2xl font-bold text-gray-900">إنشاء حساب جديد</CardTitle>
+          <CardDescription>انضم إلى منصة تفوق للاختبارات الإلكترونية</CardDescription>
         </CardHeader>
-        
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-right block">الاسم الكامل</Label>
-              <div className="relative">
-                <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <Input
-                  id="fullName"
-                  type="text"
-                  value={formData.fullName}
-                  onChange={(e) => handleInputChange("fullName", e.target.value)}
-                  placeholder="أدخل اسمك الكامل"
-                  className="pl-10 text-right"
-                />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {errors.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                <ul className="text-sm text-red-600 space-y-1">
+                  {errors.map((error, index) => (
+                    <li key={index}>• {error}</li>
+                  ))}
+                </ul>
               </div>
-            </div>
-            
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-right block">البريد الإلكتروني</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange("email", e.target.value)}
-                  placeholder="أدخل بريدك الإلكتروني"
-                  className="pl-10 text-right"
-                  dir="ltr"
-                />
-              </div>
+              <Label htmlFor="fullName">الاسم الكامل</Label>
+              <Input
+                id="fullName"
+                name="fullName"
+                type="text"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                placeholder="أدخل اسمك الكامل"
+                required
+              />
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-right block">كلمة المرور</Label>
+              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="أدخل بريدك الإلكتروني"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">كلمة المرور</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <Input
                   id="password"
-                  type="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
                   value={formData.password}
-                  onChange={(e) => handleInputChange("password", e.target.value)}
+                  onChange={handleInputChange}
                   placeholder="أدخل كلمة المرور"
-                  className="pl-10"
+                  required
                 />
+                <button
+                  type="button"
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-right block">تأكيد كلمة المرور</Label>
+              <Label htmlFor="confirmPassword">تأكيد كلمة المرور</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <Input
                   id="confirmPassword"
-                  type="password"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
                   value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+                  onChange={handleInputChange}
                   placeholder="أعد إدخال كلمة المرور"
-                  className="pl-10"
+                  required
                 />
+                <button
+                  type="button"
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
-            
+
             <div className="space-y-3">
-              <Label className="text-right block">نوع الحساب</Label>
-              <RadioGroup 
-                value={formData.role} 
-                onValueChange={(value) => handleInputChange("role", value)}
-                className="grid grid-cols-2 gap-4"
+              <Label>نوع الحساب</Label>
+              <RadioGroup
+                value={formData.role}
+                onValueChange={(value: "student" | "teacher") =>
+                  setFormData({ ...formData, role: value })
+                }
+                className="flex flex-col space-y-2"
               >
-                <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-gray-50">
-                  <Label htmlFor="student" className="flex-1 text-right cursor-pointer">طالب</Label>
+                <div className="flex items-center space-x-2 space-x-reverse">
                   <RadioGroupItem value="student" id="student" />
+                  <Label htmlFor="student">طالب</Label>
                 </div>
-                <div className="flex items-center space-x-2 border rounded-lg p-3 hover:bg-gray-50">
-                  <Label htmlFor="teacher" className="flex-1 text-right cursor-pointer">معلم</Label>
+                <div className="flex items-center space-x-2 space-x-reverse">
                   <RadioGroupItem value="teacher" id="teacher" />
+                  <Label htmlFor="teacher">معلم</Label>
                 </div>
               </RadioGroup>
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="terms"
-                checked={formData.agreeToTerms}
-                onCheckedChange={(checked) => handleInputChange("agreeToTerms", checked as boolean)}
-              />
-              <Label htmlFor="terms" className="text-sm text-gray-600 cursor-pointer">
-                أوافق على{" "}
-                <Link to="/terms" className="text-primary-600 hover:text-primary-700">
-                  شروط الاستخدام
-                </Link>
-                {" "}و{" "}
-                <Link to="/privacy" className="text-primary-600 hover:text-primary-700">
-                  سياسة الخصوصية
-                </Link>
-              </Label>
-            </div>
-            
-            <Button type="submit" className="w-full bg-primary-600 hover:bg-primary-700" size="lg">
-              إنشاء حساب
+
+            <Button
+              type="submit"
+              className="w-full bg-primary-600 hover:bg-primary-700"
+              disabled={loading}
+            >
+              {loading ? "جاري إنشاء الحساب..." : "إنشاء حساب"}
             </Button>
-            
+
             <div className="text-center">
-              <p className="text-gray-600">
+              <span className="text-sm text-gray-600">
                 لديك حساب بالفعل؟{" "}
-                <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+                <Link to="/login" className="font-medium text-primary-600 hover:text-primary-500">
                   تسجيل الدخول
                 </Link>
-              </p>
+              </span>
             </div>
           </form>
         </CardContent>
