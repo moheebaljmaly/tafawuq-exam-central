@@ -1,173 +1,168 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Search, Clock, Users, BookOpen } from "lucide-react";
 
 const AvailableExams = () => {
-  const { user, userProfile } = useAuth();
-  const navigate = useNavigate();
-  const [exams, setExams] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [startingExamId, setStartingExamId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    const fetchAvailableExams = async () => {
-      if (!user || !userProfile) return;
+  const exams = [
+    {
+      id: 1,
+      title: "امتحان الرياضيات - الفصل الأول",
+      description: "امتحان شامل في الجبر والهندسة",
+      duration: 120,
+      questions: 50,
+      startTime: "2025-06-25T10:00:00",
+      endTime: "2025-06-25T12:30:00",
+      status: "active",
+      subject: "الرياضيات"
+    },
+    {
+      id: 2,
+      title: "امتحان العلوم الطبيعية",
+      description: "فيزياء وكيمياء وأحياء",
+      duration: 90,
+      questions: 40,
+      startTime: "2025-06-28T14:00:00",
+      endTime: "2025-06-28T15:30:00",
+      status: "active",
+      subject: "العلوم"
+    },
+    {
+      id: 3,
+      title: "امتحان التاريخ الإسلامي",
+      description: "تاريخ الدولة الإسلامية",
+      duration: 60,
+      questions: 30,
+      startTime: "2025-07-01T09:00:00",
+      endTime: "2025-07-01T10:00:00",
+      status: "upcoming",
+      subject: "التاريخ"
+    },
+    {
+      id: 4,
+      title: "امتحان اللغة العربية",
+      description: "نحو وصرف وأدب",
+      duration: 100,
+      questions: 35,
+      startTime: "2025-07-03T11:00:00",
+      endTime: "2025-07-03T12:40:00",
+      status: "upcoming",
+      subject: "اللغة العربية"
+    }
+  ];
 
-      try {
-        setLoading(true);
-        console.log('Fetching available exams for student:', userProfile.id);
-        
-        const { data, error } = await supabase
-          .from('exam_attempts')
-          .select(`
-            id,
-            status,
-            exam_id,
-            exams (
-              id,
-              title,
-              subject,
-              start_time,
-              end_time,
-              exam_code
-            )
-          `)
-          .eq('student_id', userProfile.id)
-          .in('status', ['registered', 'in-progress']);
+  const filteredExams = exams.filter(exam =>
+    exam.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    exam.subject.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-        if (error) {
-          console.error('Error fetching exams:', error);
-          throw error;
-        }
-
-        console.log('Raw exam registrations data:', data);
-
-        const now = new Date();
-        const available = data.filter(reg => {
-            const exam = reg.exams as any;
-            if (!exam) {
-                console.log('Filtering out registration with no exam data:', reg);
-                return false;
-            }
-            const startDate = new Date(exam.start_time);
-            const endDate = new Date(exam.end_time);
-            const isAvailable = now >= startDate && now <= endDate;
-            console.log(`Exam ${exam.title} (${exam.id}): Start=${startDate.toLocaleString()}, End=${endDate.toLocaleString()}, Available=${isAvailable}`);
-            return isAvailable;
-        });
-
-        console.log('Available exams after filtering:', available);
-        setExams(available);
-      } catch (error) {
-        console.error('Error fetching available exams:', error);
-        toast.error('حدث خطأ أثناء جلب الامتحانات المتاحة: ' + (error as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAvailableExams();
-  }, [user, userProfile]);
-
-  const handleStartExam = async (studentExam: any) => {
-    setStartingExamId(studentExam.id);
-    try {
-      console.log('Starting exam:', studentExam);
-      
-      if (studentExam.status !== 'in-progress') {
-        console.log('Updating exam status to in-progress');
-        const { error } = await supabase
-          .from('exam_attempts')
-          .update({ status: 'in-progress', started_at: new Date().toISOString() })
-          .eq('id', studentExam.id);
-        
-        if (error) {
-          console.error('Error updating exam status:', error);
-          throw error;
-        }
-      }
-      
-      console.log('Navigating to exam page:', studentExam.exams.id);
-      navigate(`/take-exam/${studentExam.exams.id}`);
-    } catch (error) {
-      console.error('Error starting exam:', error);
-      toast.error("فشل في بدء الامتحان: " + (error as Error).message);
-    } finally {
-      setStartingExamId(null);
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Badge className="bg-green-100 text-green-800">متاح الآن</Badge>;
+      case "upcoming":
+        return <Badge variant="outline">قريباً</Badge>;
+      default:
+        return <Badge variant="secondary">غير متاح</Badge>;
     }
   };
 
-  if (loading) {
-    return (
-        <div className="flex items-center justify-center h-40">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="mr-4">جاري تحميل الامتحانات...</p>
-        </div>
-    );
-  }
+  const formatDateTime = (dateTime: string) => {
+    const date = new Date(dateTime);
+    return date.toLocaleDateString('ar-SA') + ' - ' + date.toLocaleTimeString('ar-SA', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>الامتحانات المتاحة</CardTitle>
-        <CardDescription>هنا قائمة بالامتحانات التي يمكنك بدؤها الآن.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>اسم الامتحان</TableHead>
-              <TableHead>المادة</TableHead>
-              <TableHead>المدة (دقائق)</TableHead>
-              <TableHead>الحالة</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {exams.length > 0 ? (
-              exams.map((studentExam) => {
-                const exam = studentExam.exams as any;
-                if (!exam) return null; // Safety check
-                return (
-                    <TableRow key={studentExam.id}>
-                        <TableCell className="font-medium">{exam.title}</TableCell>
-                        <TableCell>{exam.subject || 'غير محدد'}</TableCell>
-                        <TableCell>{exam.duration}</TableCell>
-                        <TableCell>
-                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                            متاح
-                            </span>
-                        </TableCell>
-                        <TableCell className="text-left">
-                            <Button 
-                                onClick={() => handleStartExam(studentExam)}
-                                disabled={loading || startingExamId === studentExam.id}
-                            >
-                                {startingExamId === studentExam.id 
-                                    ? <Loader2 className="h-4 w-4 animate-spin" /> 
-                                    : (studentExam.status === 'in-progress' ? "متابعة الامتحان" : "بدء الامتحان")}
-                            </Button>
-                        </TableCell>
-                    </TableRow>
-                )
-            })
-            ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center">
-                  لا توجد امتحانات متاحة حاليًا.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+    <div className="space-y-6" dir="rtl">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">الامتحانات المتاحة</h2>
+        <p className="text-muted-foreground">اختر امتحاناً لبدء الحل</p>
+      </div>
+
+      {/* شريط البحث */}
+      <div className="relative">
+        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+        <Input
+          placeholder="البحث في الامتحانات..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pr-10"
+        />
+      </div>
+
+      {/* قائمة الامتحانات */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {filteredExams.map((exam) => (
+          <Card key={exam.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-xl">{exam.title}</CardTitle>
+                  <CardDescription className="mt-2">{exam.description}</CardDescription>
+                </div>
+                {getStatusBadge(exam.status)}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* تفاصيل الامتحان */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span>{exam.duration} دقيقة</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <span>{exam.questions} سؤال</span>
+                </div>
+              </div>
+
+              {/* وقت الامتحان */}
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="font-medium">وقت البداية: </span>
+                  <span className="text-muted-foreground">{formatDateTime(exam.startTime)}</span>
+                </div>
+                <div>
+                  <span className="font-medium">وقت النهاية: </span>
+                  <span className="text-muted-foreground">{formatDateTime(exam.endTime)}</span>
+                </div>
+              </div>
+
+              {/* زر البدء */}
+              <Button 
+                className="w-full" 
+                disabled={exam.status !== "active"}
+                onClick={() => {
+                  if (exam.status === "active") {
+                    window.location.href = `/take-exam/${exam.id}`;
+                  }
+                }}
+              >
+                {exam.status === "active" ? "بدء الامتحان" : 
+                 exam.status === "upcoming" ? "سيكون متاحاً قريباً" : "غير متاح"}
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {filteredExams.length === 0 && (
+        <Card>
+          <CardContent className="py-8 text-center">
+            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">لا توجد امتحانات</h3>
+            <p className="text-muted-foreground">لا توجد امتحانات متاحة حالياً تطابق بحثك</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 };
 

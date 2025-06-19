@@ -36,6 +36,10 @@ import Profile from './pages/dashboards/teacher/Profile';
 import Settings from './pages/dashboards/teacher/Settings';
 import TeacherHelp from './pages/dashboards/teacher/Help';
 
+// Admin Pages
+import AdminDashboard from './pages/AdminDashboard';
+import TeacherPendingApproval from './pages/TeacherPendingApproval';
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -48,6 +52,10 @@ const router = createBrowserRouter([
   },
   {
     path: '/signup',
+    element: <Signup />,
+  },
+  {
+    path: '/register',
     element: <Signup />,
   },
   {
@@ -85,6 +93,14 @@ const router = createBrowserRouter([
       { path: 'settings', element: <Settings /> },
       { path: 'help', element: <TeacherHelp /> },
     ],
+  },
+  {
+    path: '/admin-dashboard',
+    element: <AdminDashboard />,
+  },
+  {
+    path: '/teacher-pending-approval',
+    element: <TeacherPendingApproval />,
   },
   {
     path: '/take-exam/:id',

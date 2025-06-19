@@ -1,127 +1,223 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Users, TrendingUp, Clock, Bell, GitBranch } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BookOpen, Users, Clock, Award, Plus, Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const TeacherOverview = () => {
-    // Mock data
+  const navigate = useNavigate();
+
   const stats = [
-    { title: "الامتحانات النشطة", value: "3", icon: Clock, color: "text-orange-500", bgColor: "bg-orange-100" },
-    { title: "الامتحانات المجدولة", value: "5", icon: FileText, color: "text-blue-500", bgColor: "bg-blue-100" },
-    { title: "الطلاب المسجلين", value: "156", icon: Users, color: "text-green-500", bgColor: "bg-green-100" },
-    { title: "النتائج المعلقة", value: "2", icon: TrendingUp, color: "text-purple-500", bgColor: "bg-purple-100" },
+    { 
+      title: "إجمالي الامتحانات", 
+      value: "12", 
+      icon: BookOpen, 
+      color: "text-blue-600",
+      bgColor: "bg-blue-50"
+    },
+    { 
+      title: "الطلاب المسجلين", 
+      value: "156", 
+      icon: Users, 
+      color: "text-green-600",
+      bgColor: "bg-green-50"
+    },
+    { 
+      title: "الامتحانات النشطة", 
+      value: "3", 
+      icon: Clock, 
+      color: "text-orange-600",
+      bgColor: "bg-orange-50"
+    },
+    { 
+      title: "معدل النجاح", 
+      value: "78%", 
+      icon: Award, 
+      color: "text-purple-600",
+      bgColor: "bg-purple-50"
+    }
   ];
 
-  const notifications = [
-    { id: 1, text: "قام الطالب 'أحمد محمود' بتقديم امتحان الرياضيات.", time: "قبل 5 دقائق", icon: GitBranch },
-    { id: 2, text: "تم إنشاء امتحان 'الفيزياء النووية' بنجاح.", time: "قبل ساعة", icon: FileText },
-    { id: 3, text: "تنبيه: تبقى 24 ساعة على بدء امتحان الكيمياء.", time: "قبل 3 ساعات", icon: Bell },
+  const recentExams = [
+    { 
+      id: 1, 
+      title: "امتحان الرياضيات المتقدمة", 
+      status: "جاري", 
+      participants: 45, 
+      date: "2025-06-19",
+      time: "10:00 ص"
+    },
+    { 
+      id: 2, 
+      title: "امتحان الفيزياء العملية", 
+      status: "مكتمل", 
+      participants: 38, 
+      date: "2025-06-18",
+      time: "02:00 م"
+    },
+    { 
+      id: 3, 
+      title: "امتحان الكيمياء التحليلية", 
+      status: "مجدول", 
+      participants: 52, 
+      date: "2025-06-22",
+      time: "11:00 ص"
+    }
   ];
 
-  const recentResults = [
-    { exam: "امتحان الرياضيات", class: "الصف العاشر", average: "85%", date: "2024-05-20" },
-    { exam: "اختبار الفيزياء", class: "الصف العاشر", average: "78%", date: "2024-05-18" },
-    { exam: "امتحان الأحياء", class: "الصف الحادي عشر", average: "91%", date: "2024-05-17" },
-  ];
-
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "جاري":
+        return <Badge className="bg-green-100 text-green-800">جاري</Badge>;
+      case "مكتمل":
+        return <Badge variant="secondary">مكتمل</Badge>;
+      case "مجدول":
+        return <Badge variant="outline">مجدول</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
 
   return (
-    <div className="space-y-6">
-       {/* Stats Cards */}
-       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
-                <CardContent className="p-6 flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                      <p className="text-3xl font-bold">{stat.value}</p>
-                    </div>
-                    <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                        <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                    </div>
-                </CardContent>
-            </Card>
-          ))}
+    <div className="space-y-6" dir="rtl">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">نظرة عامة</h2>
+          <p className="text-muted-foreground">لوحة تحكم المعلم</p>
         </div>
+        <Button onClick={() => navigate('/teacher-dashboard/create-exam')}>
+          <Plus className="h-4 w-4 ml-2" />
+          إنشاء امتحان جديد
+        </Button>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Notifications */}
-        <Card className="lg:col-span-1">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" />
-                    <span>إشعارات وتنبيهات</span>
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    {notifications.map(item => (
-                        <div key={item.id} className="flex items-start gap-3">
-                           <div className="bg-muted p-2 rounded-full">
-                             <item.icon className="h-5 w-5 text-muted-foreground" />
-                           </div>
-                           <div>
-                            <p className="text-sm font-medium">{item.text}</p>
-                            <p className="text-xs text-muted-foreground">{item.time}</p>
-                           </div>
-                        </div>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
-
-        {/* Recent Results */}
-        <Card className="lg:col-span-2">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5" />
-                    <span>أحدث النتائج</span>
-                </CardTitle>
-                <Button variant="outline">عرض كل النتائج</Button>
+      {/* الإحصائيات */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat, index) => (
+          <Card key={index}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <div className={`p-2 rounded-lg ${stat.bgColor}`}>
+                <stat.icon className={`h-4 w-4 ${stat.color}`} />
               </div>
             </CardHeader>
             <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>الامتحان</TableHead>
-                      <TableHead>الفصل</TableHead>
-                      <TableHead>متوسط الدرجات</TableHead>
-                      <TableHead>التاريخ</TableHead>
-                      <TableHead>الإجراء</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentResults.map((result, index) => (
-                        <TableRow key={index}>
-                            <TableCell className="font-medium">{result.exam}</TableCell>
-                            <TableCell>
-                                <Badge variant="outline">{result.class}</Badge>
-                            </TableCell>
-                            <TableCell>{result.average}</TableCell>
-                            <TableCell>{result.date}</TableCell>
-                            <TableCell>
-                                <Button variant="link" className="p-0 h-auto">تحليل</Button>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div className="text-2xl font-bold">{stat.value}</div>
             </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* الامتحانات الأخيرة */}
+      <Card>
+        <CardHeader>
+          <CardTitle>الامتحانات الأخيرة</CardTitle>
+          <CardDescription>آخر الامتحانات التي قمت بإنشائها</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {recentExams.map((exam) => (
+              <div key={exam.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex-1">
+                  <h4 className="font-medium">{exam.title}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {exam.date} في {exam.time} • {exam.participants} طالب مشارك
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {getStatusBadge(exam.status)}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => navigate(`/teacher-dashboard/exam-details/${exam.id}`)}
+                  >
+                    <Eye className="h-4 w-4 ml-1" />
+                    عرض
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* أزرار سريعة */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>إدارة الامتحانات</CardTitle>
+            <CardDescription>عرض وتعديل الامتحانات الحالية</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => navigate('/teacher-dashboard/manage-exams')}
+            >
+              إدارة الامتحانات
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>بنك الأسئلة</CardTitle>
+            <CardDescription>إضافة وتنظيم الأسئلة</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => navigate('/teacher-dashboard/question-bank')}
+            >
+              بنك الأسئلة
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>تحليل النتائج</CardTitle>
+            <CardDescription>مراجعة وتحليل أداء الطلاب</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => navigate('/teacher-dashboard/results-analysis')}
+            >
+              تحليل النتائج
+            </Button>
+          </CardContent>
         </Card>
       </div>
 
+      {/* إشعارات سريعة */}
+      <Card>
+        <CardHeader>
+          <CardTitle>الإشعارات</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">امتحان الرياضيات المتقدمة جاري الآن</p>
+                <p className="text-xs text-muted-foreground">45 طالب يؤدون الامتحان حالياً</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
+              <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">3 طلاب جدد يحتاجون موافقة</p>
+                <p className="text-xs text-muted-foreground">مراجعة طلبات الانضمام الجديدة</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  )
-}
+  );
+};
 
-export default TeacherOverview; 
+export default TeacherOverview;
