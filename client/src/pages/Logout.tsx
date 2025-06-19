@@ -7,25 +7,24 @@ const Logout = () => {
 
   useEffect(() => {
     const handleLogout = async () => {
+      // مسح البيانات المحلية أولاً
+      localStorage.clear();
+      sessionStorage.clear();
+      
       try {
         // تسجيل الخروج من Supabase
         await supabase.auth.signOut();
-        
-        // مسح البيانات المحلية
-        localStorage.clear();
-        sessionStorage.clear();
-        
-        // إعادة تحميل الصفحة للعودة للصفحة الرئيسية
-        window.location.href = "/";
       } catch (error) {
         console.error("Error during logout:", error);
-        // في حالة فشل تسجيل الخروج، انتقل للصفحة الرئيسية
-        window.location.href = "/";
+      } finally {
+        // العودة للصفحة الرئيسية في جميع الأحوال
+        window.location.replace("/");
       }
     };
 
+    // تنفيذ تسجيل الخروج فوراً
     handleLogout();
-  }, [navigate]);
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center" dir="rtl">

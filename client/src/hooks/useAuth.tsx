@@ -158,20 +158,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      // إزالة البيانات المحلية أولاً
       setUser(null);
       setUserProfile(null);
-      
-      // مسح البيانات المحلية
       localStorage.clear();
       sessionStorage.clear();
       
-      // إعادة توجيه للصفحة الرئيسية
-      window.location.href = "/";
+      // تسجيل الخروج من Supabase
+      await supabase.auth.signOut();
+      
+      // إعادة تحميل الصفحة للعودة للرئيسية
+      window.location.replace("/");
     } catch (error) {
       console.error("Error during sign out:", error);
-      // حتى لو فشل تسجيل الخروج، انتقل للصفحة الرئيسية
-      window.location.href = "/";
+      // في حالة الفشل، انتقل للصفحة الرئيسية مباشرة
+      window.location.replace("/");
     }
   };
 

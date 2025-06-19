@@ -38,39 +38,55 @@ const Index = () => {
     const checkAuth = async () => {
       try {
         setIsCheckingAuth(true);
-        const { data } = await supabase.auth.getSession();
         
-        if (data.session) {
-          console.log('User is authenticated, checking profile...');
+        // إعطاء وقت قصير للتحقق من الجلسة
+        const timeoutPromise = new Promise(resolve => setTimeout(resolve, 1000));
+        const sessionPromise = supabase.auth.getSession();
+        
+        // استخدام Promise.race للحد من وقت الانتظار
+        const results = await Promise.allSettled([sessionPromise, timeoutPromise]);
+        
+        if (results[0].status === 'fulfilled') {
+          const { data } = results[0].value;
           
-          // الحصول على بيانات المستخدم من قاعدة البيانات
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.session.user.id)
-            .single();
-          
-          if (profile) {
-            const userRole = profile.role;
-            console.log('User role:', userRole);
+          if (data.session) {
+            console.log('User is authenticated, checking profile...');
             
-            // التوجيه حسب الدور
-            if (userRole === 'admin') {
-              navigate('/admin-dashboard');
-            } else if (userRole === 'teacher') {
-              navigate('/teacher-dashboard');
-            } else {
-              navigate('/student-dashboard');
+            try {
+              // الحصول على بيانات المستخدم من قاعدة البيانات
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', data.session.user.id)
+                .single();
+              
+              if (profile) {
+                const userRole = profile.role;
+                console.log('User role:', userRole);
+                
+                // التوجيه حسب الدور
+                if (userRole === 'admin') {
+                  navigate('/admin-dashboard');
+                  return;
+                } else if (userRole === 'teacher') {
+                  navigate('/teacher-dashboard');
+                  return;
+                } else {
+                  navigate('/student-dashboard');
+                  return;
+                }
+              }
+            } catch (profileError) {
+              console.log('Error fetching profile, staying on home page');
             }
-          } else {
-            console.log('No profile found, staying on home page');
           }
-        } else {
-          console.log('No authenticated session found, staying on home page');
         }
+        
+        console.log('No authenticated session found, staying on home page');
       } catch (error) {
         console.error('Error checking authentication:', error);
       } finally {
+        // التأكد من إنهاء حالة التحقق
         setIsCheckingAuth(false);
       }
     };
@@ -78,13 +94,13 @@ const Index = () => {
     checkAuth();
   }, [navigate]);
 
-  // عرض شاشة التحميل أثناء فحص المصادقة
+  // عرض شاشة التحميل لفترة قصيرة فقط
   if (isCheckingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" dir="rtl">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-lg">جاري التحقق من الجلسة...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600">جاري التحقق...</p>
         </div>
       </div>
     );

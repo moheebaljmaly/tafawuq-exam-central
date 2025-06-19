@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const Header = () => {
-  const { user, userProfile, signOut } = useAuth();
+  const { user, userProfile } = useAuth();
   const navigate = useNavigate();
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -31,12 +31,17 @@ const Header = () => {
   }, [user, userProfile]);
 
   const handleSignOut = async () => {
+    // مسح البيانات فوراً والانتقال للصفحة الرئيسية
+    localStorage.clear();
+    sessionStorage.clear();
+    
     try {
-      await signOut();
+      await supabase.auth.signOut();
     } catch (error) {
       console.error("Error during logout:", error);
-      // في حالة فشل تسجيل الخروج، انتقل للصفحة الرئيسية
-      window.location.href = "/";
+    } finally {
+      // العودة للصفحة الرئيسية مباشرة
+      window.location.replace("/");
     }
   };
 
