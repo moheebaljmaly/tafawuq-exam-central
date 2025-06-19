@@ -1,42 +1,28 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Clock, Award, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const StudentOverview = () => {
   const navigate = useNavigate();
 
-  const stats = [
-    { 
-      title: "الامتحانات المتاحة", 
-      value: "5", 
-      icon: BookOpen, 
-      color: "text-blue-600",
-      bgColor: "bg-blue-50"
-    },
-    { 
-      title: "الامتحانات المكتملة", 
-      value: "12", 
-      icon: Award, 
-      color: "text-green-600",
-      bgColor: "bg-green-50"
-    },
-    { 
-      title: "الدرجات المعلقة", 
-      value: "3", 
-      icon: Clock, 
-      color: "text-orange-600",
-      bgColor: "bg-orange-50"
-    },
-    { 
-      title: "متوسط الدرجات", 
-      value: "85%", 
-      icon: TrendingUp, 
-      color: "text-purple-600",
-      bgColor: "bg-purple-50"
+  const { data: stats = [], isLoading: statsLoading } = useQuery({
+    queryKey: ['/api/student/stats'],
+    queryFn: async () => {
+      const response = await fetch('/api/student/stats');
+      if (!response.ok) {
+        return [
+          { title: "الامتحانات المتاحة", value: "0", icon: BookOpen, color: "text-blue-600", bgColor: "bg-blue-50" },
+          { title: "الامتحانات المكتملة", value: "0", icon: Award, color: "text-green-600", bgColor: "bg-green-50" },
+          { title: "الدرجات المعلقة", value: "0", icon: Clock, color: "text-orange-600", bgColor: "bg-orange-50" },
+          { title: "متوسط الدرجات", value: "0%", icon: TrendingUp, color: "text-purple-600", bgColor: "bg-purple-50" }
+        ];
+      }
+      return response.json();
     }
-  ];
+  });
 
   const upcomingExams = [
     { id: 1, title: "امتحان الرياضيات", date: "2025-06-25", time: "10:00 ص", status: "متاح" },

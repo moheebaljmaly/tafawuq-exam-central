@@ -1,69 +1,39 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Users, Clock, Award, Plus, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const TeacherOverview = () => {
   const navigate = useNavigate();
 
-  const stats = [
-    { 
-      title: "إجمالي الامتحانات", 
-      value: "12", 
-      icon: BookOpen, 
-      color: "text-blue-600",
-      bgColor: "bg-blue-50"
-    },
-    { 
-      title: "الطلاب المسجلين", 
-      value: "156", 
-      icon: Users, 
-      color: "text-green-600",
-      bgColor: "bg-green-50"
-    },
-    { 
-      title: "الامتحانات النشطة", 
-      value: "3", 
-      icon: Clock, 
-      color: "text-orange-600",
-      bgColor: "bg-orange-50"
-    },
-    { 
-      title: "معدل النجاح", 
-      value: "78%", 
-      icon: Award, 
-      color: "text-purple-600",
-      bgColor: "bg-purple-50"
+  const { data: stats = [], isLoading: statsLoading } = useQuery({
+    queryKey: ['/api/teacher/stats'],
+    queryFn: async () => {
+      const response = await fetch('/api/teacher/stats');
+      if (!response.ok) {
+        return [
+          { title: "إجمالي الامتحانات", value: "0", icon: BookOpen, color: "text-blue-600", bgColor: "bg-blue-50" },
+          { title: "الطلاب المسجلين", value: "0", icon: Users, color: "text-green-600", bgColor: "bg-green-50" },
+          { title: "الامتحانات النشطة", value: "0", icon: Clock, color: "text-orange-600", bgColor: "bg-orange-50" },
+          { title: "معدل النجاح", value: "0%", icon: Award, color: "text-purple-600", bgColor: "bg-purple-50" }
+        ];
+      }
+      return response.json();
     }
-  ];
+  });
 
-  const recentExams = [
-    { 
-      id: 1, 
-      title: "امتحان الرياضيات المتقدمة", 
-      status: "جاري", 
-      participants: 45, 
-      date: "2025-06-19",
-      time: "10:00 ص"
-    },
-    { 
-      id: 2, 
-      title: "امتحان الفيزياء العملية", 
-      status: "مكتمل", 
-      participants: 38, 
-      date: "2025-06-18",
-      time: "02:00 م"
-    },
-    { 
-      id: 3, 
-      title: "امتحان الكيمياء التحليلية", 
-      status: "مجدول", 
-      participants: 52, 
-      date: "2025-06-22",
-      time: "11:00 ص"
+  const { data: recentExams = [], isLoading: examsLoading } = useQuery({
+    queryKey: ['/api/teacher/recent-exams'],
+    queryFn: async () => {
+      const response = await fetch('/api/teacher/recent-exams');
+      if (!response.ok) {
+        throw new Error('فشل في جلب الامتحانات الأخيرة');
+      }
+      return response.json();
     }
-  ];
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {

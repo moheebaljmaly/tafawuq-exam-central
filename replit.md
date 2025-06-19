@@ -96,7 +96,9 @@ This is a comprehensive online exam platform built with React and TypeScript on 
   - ربط صفحات الطلاب بقاعدة البيانات الحقيقية
   - إضافة صفحة "الانضمام للامتحان" بنظام الرموز
   - إصلاح مشكلة النقر المتكرر على الأزرار
-  - إضافة بيانات تجريبية للاختبار
+  - إزالة جميع البيانات الوهمية واستخدام قاعدة البيانات فقط
+  - إصلاح مشكلة تسجيل الخروج للعودة للصفحة الرئيسية
+  - تحسين معالجة الحالات الفارغة في الواجهات
 
 ## Changelog
 ```
@@ -106,5 +108,7 @@ This is a comprehensive online exam platform built with React and TypeScript on 
 
 ## User Preferences
 ```
-Preferred communication style: Simple, everyday language.
+Preferred communication style: Simple, everyday language in Arabic.
+Data handling: No mock/dummy data - only real database data.
+Logout behavior: Always return to main landing page after logout.
 ```

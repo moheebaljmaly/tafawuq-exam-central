@@ -22,59 +22,9 @@ const AvailableExams = () => {
     }
   });
 
-  const mockExams = [
-    {
-      id: 1,
-      title: "امتحان الرياضيات - الفصل الأول",
-      description: "امتحان شامل في الجبر والهندسة",
-      duration: 120,
-      questions: 50,
-      startTime: "2025-06-25T10:00:00",
-      endTime: "2025-06-25T12:30:00",
-      status: "active",
-      subject: "الرياضيات"
-    },
-    {
-      id: 2,
-      title: "امتحان العلوم الطبيعية",
-      description: "فيزياء وكيمياء وأحياء",
-      duration: 90,
-      questions: 40,
-      startTime: "2025-06-28T14:00:00",
-      endTime: "2025-06-28T15:30:00",
-      status: "active",
-      subject: "العلوم"
-    },
-    {
-      id: 3,
-      title: "امتحان التاريخ الإسلامي",
-      description: "تاريخ الدولة الإسلامية",
-      duration: 60,
-      questions: 30,
-      startTime: "2025-07-01T09:00:00",
-      endTime: "2025-07-01T10:00:00",
-      status: "upcoming",
-      subject: "التاريخ"
-    },
-    {
-      id: 4,
-      title: "امتحان اللغة العربية",
-      description: "نحو وصرف وأدب",
-      duration: 100,
-      questions: 35,
-      startTime: "2025-07-03T11:00:00",
-      endTime: "2025-07-03T12:40:00",
-      status: "upcoming",
-      subject: "اللغة العربية"
-    }
-  ];
-
-  // استخدام البيانات من قاعدة البيانات أو البيانات التجريبية
-  const examList = exams.length > 0 ? exams : mockExams;
-  
-  const filteredExams = examList.filter(exam => 
+  const filteredExams = exams.filter(exam => 
     exam.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    exam.subject?.toLowerCase().includes(searchTerm.toLowerCase())
+    exam.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleJoinExam = async (examId: number | string) => {
@@ -214,12 +164,14 @@ const AvailableExams = () => {
         ))}
       </div>
 
-      {filteredExams.length === 0 && (
+      {!isLoading && !error && filteredExams.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center">
             <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">لا توجد امتحانات</h3>
-            <p className="text-muted-foreground">لا توجد امتحانات متاحة حالياً تطابق بحثك</p>
+            <h3 className="text-lg font-medium mb-2">لا توجد امتحانات متاحة</h3>
+            <p className="text-muted-foreground">
+              {searchTerm ? 'لا توجد امتحانات تطابق بحثك' : 'لا توجد امتحانات متاحة حالياً'}
+            </p>
           </CardContent>
         </Card>
       )}

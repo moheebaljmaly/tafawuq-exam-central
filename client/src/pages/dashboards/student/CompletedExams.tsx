@@ -3,12 +3,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { useQuery } from "@tanstack/react-query";
 import { Search, FileText, Calendar, Award, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const CompletedExams = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+
+  const { data: exams = [], isLoading, error } = useQuery({
+    queryKey: ['/api/student/completed-exams'],
+    queryFn: async () => {
+      const response = await fetch('/api/student/completed-exams');
+      if (!response.ok) {
+        throw new Error('فشل في جلب الامتحانات المكتملة');
+      }
+      return response.json();
+    }
+  });
 
   const completedExams = [
     {

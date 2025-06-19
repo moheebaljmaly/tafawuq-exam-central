@@ -167,4 +167,59 @@ export function registerExamRoutes(app: Express) {
       res.status(500).json({ error: "فشل في حفظ الإجابة" });
     }
   });
+
+  // Get student completed exams
+  app.get("/api/student/completed-exams", async (req, res) => {
+    try {
+      const studentId = req.query.studentId || 'demo_student';
+      const attempts = await storage.getExamAttemptsByStudent(studentId);
+      res.json(attempts);
+    } catch (error) {
+      console.error("Error fetching completed exams:", error);
+      res.status(500).json({ error: "فشل في جلب الامتحانات المكتملة" });
+    }
+  });
+
+  // Get student stats
+  app.get("/api/student/stats", async (req, res) => {
+    try {
+      // إرجاع إحصائيات فارغة إذا لم تكن متوفرة
+      res.json([
+        { title: "إجمالي الامتحانات", value: "0", icon: "BookOpen", color: "text-blue-600", bgColor: "bg-blue-50" },
+        { title: "الامتحانات المكتملة", value: "0", icon: "CheckCircle", color: "text-green-600", bgColor: "bg-green-50" },
+        { title: "متوسط الدرجات", value: "0%", icon: "TrendingUp", color: "text-purple-600", bgColor: "bg-purple-50" },
+        { title: "الترتيب", value: "-", icon: "Award", color: "text-orange-600", bgColor: "bg-orange-50" }
+      ]);
+    } catch (error) {
+      console.error("Error fetching student stats:", error);
+      res.status(500).json({ error: "فشل في جلب الإحصائيات" });
+    }
+  });
+
+  // Get teacher stats
+  app.get("/api/teacher/stats", async (req, res) => {
+    try {
+      res.json([
+        { title: "إجمالي الامتحانات", value: "0", icon: "BookOpen", color: "text-blue-600", bgColor: "bg-blue-50" },
+        { title: "الطلاب المسجلين", value: "0", icon: "Users", color: "text-green-600", bgColor: "bg-green-50" },
+        { title: "الامتحانات النشطة", value: "0", icon: "Clock", color: "text-orange-600", bgColor: "bg-orange-50" },
+        { title: "معدل النجاح", value: "0%", icon: "Award", color: "text-purple-600", bgColor: "bg-purple-50" }
+      ]);
+    } catch (error) {
+      console.error("Error fetching teacher stats:", error);
+      res.status(500).json({ error: "فشل في جلب إحصائيات المعلم" });
+    }
+  });
+
+  // Get teacher recent exams
+  app.get("/api/teacher/recent-exams", async (req, res) => {
+    try {
+      const teacherId = req.query.teacherId || 'demo_teacher';
+      const exams = await storage.getExamsByTeacher(teacherId);
+      res.json(exams.slice(0, 3)); // آخر 3 امتحانات
+    } catch (error) {
+      console.error("Error fetching teacher recent exams:", error);
+      res.status(500).json({ error: "فشل في جلب الامتحانات الأخيرة" });
+    }
+  });
 }

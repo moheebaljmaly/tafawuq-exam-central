@@ -47,38 +47,7 @@ const TakeExamNew = () => {
     enabled: !!id
   });
 
-  // استخدام الأسئلة من قاعدة البيانات أو البيانات التجريبية
-  const mockQuestions = [
-    {
-      id: 1,
-      question_text: "ما هو ناتج العملية: 2 + 3 × 4؟",
-      question_type: "multiple_choice",
-      answer_choices: [
-        { id: "a", choice_text: "14", is_correct: true },
-        { id: "b", choice_text: "20", is_correct: false },
-        { id: "c", choice_text: "24", is_correct: false },
-        { id: "d", choice_text: "18", is_correct: false }
-      ]
-    },
-    {
-      id: 2,
-      question_text: "اشرح قانون نيوتن الثاني للحركة",
-      question_type: "essay"
-    },
-    {
-      id: 3,
-      question_text: "ما هي عاصمة المملكة العربية السعودية؟",
-      question_type: "multiple_choice",
-      answer_choices: [
-        { id: "a", choice_text: "جدة", is_correct: false },
-        { id: "b", choice_text: "الرياض", is_correct: true },
-        { id: "c", choice_text: "الدمام", is_correct: false },
-        { id: "d", choice_text: "مكة المكرمة", is_correct: false }
-      ]
-    }
-  ];
-
-  const examQuestions = questions.length > 0 ? questions : mockQuestions;
+  const examQuestions = questions;
 
   // تحديث الوقت المتبقي بناءً على بيانات الامتحان
   useEffect(() => {
@@ -173,12 +142,25 @@ const TakeExamNew = () => {
     return (
       <div className="min-h-screen flex items-center justify-center" dir="rtl">
         <div className="text-center">
-          <p className="text-lg text-red-600">خطأ في جلب البيانات</p>
+          <p className="text-lg text-red-600">خطأ في جلب بيانات الامتحان</p>
           <p className="text-sm text-muted-foreground">
             {examError?.message || questionsError?.message}
           </p>
           <Button onClick={() => window.location.reload()} className="mt-4">
             إعادة المحاولة
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!examQuestions || examQuestions.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" dir="rtl">
+        <div className="text-center">
+          <p className="text-lg">لا توجد أسئلة في هذا الامتحان</p>
+          <Button onClick={() => navigate('/student-dashboard')} className="mt-4">
+            العودة إلى لوحة التحكم
           </Button>
         </div>
       </div>
