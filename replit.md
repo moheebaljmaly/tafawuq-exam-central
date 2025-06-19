@@ -89,10 +89,19 @@ This is a comprehensive online exam platform built with React and TypeScript on 
 - **Schema**: Shared schema definitions between client and server
 - **Connection**: Neon serverless PostgreSQL with connection pooling
 
+## Recent Changes
+- June 19, 2025: إصلاح مشاكل قاعدة البيانات وربط الواجهات
+  - أضافة API routes للامتحانات والأسئلة
+  - إصلاح مشكلة زر التسجيل (تحسين اللون والخلفية)
+  - ربط صفحات الطلاب بقاعدة البيانات الحقيقية
+  - إضافة صفحة "الانضمام للامتحان" بنظام الرموز
+  - إصلاح مشكلة النقر المتكرر على الأزرار
+  - إضافة بيانات تجريبية للاختبار
+
 ## Changelog
 ```
-Changelog:
-- June 19, 2025. Initial setup
+- June 19, 2025: Initial setup and database integration
+- June 19, 2025: Fixed UI issues and database connectivity
 ```
 
 ## User Preferences

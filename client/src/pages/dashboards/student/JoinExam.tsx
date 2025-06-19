@@ -1,53 +1,21 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { KeyRound, Users, Clock, BookOpen, AlertCircle } from "lucide-react";
+import { KeyRound, ArrowRight } from "lucide-react";
 
 const JoinExam = () => {
-  const [examCode, setExamCode] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [examInfo, setExamInfo] = useState(null);
+  const navigate = useNavigate();
   const { toast } = useToast();
+  const [examCode, setExamCode] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
 
-  // بيانات وهمية للامتحانات
-  const mockExams = {
-    "MATH2025": {
-      title: "امتحان الرياضيات المتقدمة",
-      teacher: "د. أحمد محمد",
-      duration: 120,
-      questions: 50,
-      startTime: "2025-06-25T10:00:00",
-      endTime: "2025-06-25T12:00:00",
-      description: "امتحان شامل في الجبر والهندسة التحليلية",
-      status: "active"
-    },
-    "SCI2025": {
-      title: "امتحان العلوم الطبيعية",
-      teacher: "د. فاطمة علي",
-      duration: 90,
-      questions: 40,
-      startTime: "2025-06-28T14:00:00",
-      endTime: "2025-06-28T15:30:00",
-      description: "فيزياء وكيمياء وأحياء",
-      status: "upcoming"
-    },
-    "HIST2025": {
-      title: "امتحان التاريخ الإسلامي",
-      teacher: "د. محمد حسن",
-      duration: 60,
-      questions: 30,
-      startTime: "2025-06-20T09:00:00",
-      endTime: "2025-06-20T10:00:00",
-      description: "تاريخ الدولة الإسلامية من البداية حتى العصر العباسي",
-      status: "ended"
-    }
-  };
-
-  const handleSearch = async () => {
+  const handleJoinExam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     if (!examCode.trim()) {
       toast({
         title: "خطأ",
@@ -57,72 +25,51 @@ const JoinExam = () => {
       return;
     }
 
-    setIsLoading(true);
+    setIsJoining(true);
     
-    // محاكاة طلب API
-    setTimeout(() => {
-      const exam = mockExams[examCode.toUpperCase()];
-      if (exam) {
-        setExamInfo(exam);
-        toast({
-          title: "تم العثور على الامتحان",
-          description: "تم العثور على الامتحان بنجاح"
-        });
-      } else {
-        setExamInfo(null);
-        toast({
-          title: "لم يتم العثور على الامتحان",
-          description: "رمز الامتحان غير صحيح أو منتهي الصلاحية",
-          variant: "destructive"
-        });
+    try {
+      // البحث عن الامتحان برمز الدخول
+      const response = await fetch(`/api/exams/code/${examCode.toUpperCase()}`);
+      
+      if (!response.ok) {
+        throw new Error('رمز الامتحان غير صحيح أو الامتحان غير متاح');
       }
-      setIsLoading(false);
-    }, 1000);
-  };
+      
+      const exam = await response.json();
+      
+      // الانضمام للامتحان
+      const joinResponse = await fetch(`/api/exams/${exam.id}/join`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentId: 'demo_student'
+        })
+      });
 
-  const handleJoinExam = () => {
-    if (!examInfo) return;
+      if (!joinResponse.ok) {
+        throw new Error('فشل في الانضمام للامتحان');
+      }
 
-    if (examInfo.status === "ended") {
       toast({
-        title: "انتهى الامتحان",
-        description: "انتهى وقت هذا الامتحان ولا يمكن دخوله",
+        title: "تم الانضمام بنجاح",
+        description: `تم الانضمام لامتحان: ${exam.title}`
+      });
+
+      // التوجه إلى صفحة الامتحان
+      setTimeout(() => {
+        navigate(`/take-exam/${exam.id}`);
+      }, 1000);
+      
+    } catch (error) {
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل في الانضمام للامتحان",
         variant: "destructive"
       });
-      return;
-    }
-
-    if (examInfo.status === "upcoming") {
-      toast({
-        title: "الامتحان لم يبدأ بعد",
-        description: "سيكون الامتحان متاحاً في الوقت المحدد",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // توجيه إلى صفحة الامتحان
-    window.location.href = `/take-exam/${examCode}`;
-  };
-
-  const formatDateTime = (dateTime: string) => {
-    const date = new Date(dateTime);
-    return date.toLocaleDateString('ar-SA') + ' - ' + date.toLocaleTimeString('ar-SA', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getStatusInfo = (status: string) => {
-    switch (status) {
-      case "active":
-        return { text: "متاح الآن", color: "text-green-600", bgColor: "bg-green-50" };
-      case "upcoming":
-        return { text: "لم يبدأ بعد", color: "text-orange-600", bgColor: "bg-orange-50" };
-      case "ended":
-        return { text: "انتهى", color: "text-red-600", bgColor: "bg-red-50" };
-      default:
-        return { text: "غير معروف", color: "text-gray-600", bgColor: "bg-gray-50" };
+    } finally {
+      setIsJoining(false);
     }
   };
 
@@ -133,7 +80,6 @@ const JoinExam = () => {
         <p className="text-muted-foreground">أدخل رمز الامتحان للانضمام</p>
       </div>
 
-      {/* نموذج إدخال رمز الامتحان */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -144,124 +90,86 @@ const JoinExam = () => {
             أدخل الرمز الذي حصلت عليه من المعلم للانضمام للامتحان
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="examCode">رمز الامتحان</Label>
-            <Input
-              id="examCode"
-              placeholder="مثال: MATH2025"
-              value={examCode}
-              onChange={(e) => setExamCode(e.target.value.toUpperCase())}
-              className="text-center text-lg font-mono"
-              maxLength={10}
-            />
-          </div>
-          <Button 
-            onClick={handleSearch} 
-            disabled={isLoading || !examCode.trim()}
-            className="w-full"
-          >
-            {isLoading ? "جاري البحث..." : "البحث عن الامتحان"}
-          </Button>
+        <CardContent>
+          <form onSubmit={handleJoinExam} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="examCode">رمز الامتحان</Label>
+              <Input
+                id="examCode"
+                type="text"
+                placeholder="مثال: ABC123"
+                value={examCode}
+                onChange={(e) => setExamCode(e.target.value.toUpperCase())}
+                className="text-center text-lg font-mono tracking-wider"
+                maxLength={10}
+              />
+              <p className="text-sm text-muted-foreground">
+                الرمز عبارة عن 6 أحرف أو أرقام
+              </p>
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full" 
+              size="lg"
+              disabled={isJoining}
+            >
+              {isJoining ? (
+                "جاري الانضمام..."
+              ) : (
+                <>
+                  <ArrowRight className="h-5 w-5 ml-2" />
+                  الانضمام للامتحان
+                </>
+              )}
+            </Button>
+          </form>
         </CardContent>
       </Card>
 
-      {/* معلومات الامتحان */}
-      {examInfo && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>{examInfo.title}</span>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusInfo(examInfo.status).color} ${getStatusInfo(examInfo.status).bgColor}`}>
-                {getStatusInfo(examInfo.status).text}
-              </span>
-            </CardTitle>
-            <CardDescription>{examInfo.description}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* تفاصيل الامتحان */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">المعلم: {examInfo.teacher}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">المدة: {examInfo.duration} دقيقة</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">الأسئلة: {examInfo.questions} سؤال</span>
-              </div>
-            </div>
-
-            {/* أوقات الامتحان */}
-            <div className="space-y-2 text-sm">
-              <div>
-                <span className="font-medium">وقت البداية: </span>
-                <span className="text-muted-foreground">{formatDateTime(examInfo.startTime)}</span>
-              </div>
-              <div>
-                <span className="font-medium">وقت النهاية: </span>
-                <span className="text-muted-foreground">{formatDateTime(examInfo.endTime)}</span>
-              </div>
-            </div>
-
-            {/* تحذيرات حسب حالة الامتحان */}
-            {examInfo.status === "upcoming" && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  هذا الامتحان لم يبدأ بعد. سيكون متاحاً في الوقت المحدد.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {examInfo.status === "ended" && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  انتهى وقت هذا الامتحان ولا يمكن دخوله.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {examInfo.status === "active" && (
-              <Alert className="bg-green-50 border-green-200">
-                <AlertCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
-                  الامتحان متاح الآن. يمكنك الانضمام وبدء الحل.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* زر الانضمام */}
-            <Button 
-              onClick={handleJoinExam}
-              disabled={examInfo.status !== "active"}
-              className="w-full"
-              size="lg"
-            >
-              {examInfo.status === "active" ? "الانضمام للامتحان" : 
-               examInfo.status === "upcoming" ? "الامتحان لم يبدأ بعد" : 
-               "انتهى الامتحان"}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* تعليمات */}
+      {/* معلومات مفيدة */}
       <Card>
         <CardHeader>
-          <CardTitle>تعليمات مهمة</CardTitle>
+          <CardTitle>تعليمات الانضمام</CardTitle>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>• تأكد من استقرار اتصال الإنترنت قبل بدء الامتحان</li>
-            <li>• احفظ إجاباتك بانتظام لتجنب فقدان البيانات</li>
-            <li>• لا يمكن إعادة دخول الامتحان بعد تسليمه</li>
-            <li>• اتصل بالمعلم في حالة وجود أي مشاكل تقنية</li>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-start gap-2">
+              <span className="text-primary">•</span>
+              تأكد من إدخال الرمز بشكل صحيح كما حصلت عليه من المعلم
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary">•</span>
+              الرمز حساس للأحرف الكبيرة والصغيرة
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary">•</span>
+              تأكد من أن الامتحان متاح ولم ينته وقته
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-primary">•</span>
+              إذا كان لديك مشكلة في الرمز، تواصل مع المعلم
+            </li>
           </ul>
+        </CardContent>
+      </Card>
+
+      {/* أمثلة على الرموز */}
+      <Card>
+        <CardHeader>
+          <CardTitle>أمثلة على رموز الامتحانات</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3">
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="font-mono text-lg">MATH01</div>
+              <div className="text-sm text-muted-foreground">امتحان الرياضيات</div>
+            </div>
+            <div className="p-3 bg-gray-50 rounded-lg">
+              <div className="font-mono text-lg">SCI123</div>
+              <div className="text-sm text-muted-foreground">امتحان العلوم</div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

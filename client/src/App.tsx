@@ -6,7 +6,7 @@ import LandingPage from './pages/Index';
 import Login from './pages/Login';
 import Signup from './pages/Register';
 import ErrorPage from './pages/NotFound';
-import TakeExam from './pages/TakeExam';
+import TakeExamNew from './pages/TakeExamNew';
 
 // Dashboard Layouts
 import StudentDashboard from './pages/StudentDashboard';
@@ -104,7 +104,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/take-exam/:id',
-    element: <TakeExam />,
+    element: <TakeExamNew />,
   },
 ]);
 

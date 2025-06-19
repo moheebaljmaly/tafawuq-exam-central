@@ -1,8 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { registerExamRoutes } from "./routes/exams";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Register exam routes
+  registerExamRoutes(app);
+  
   // Authentication routes
   app.post("/api/auth/signup", async (req, res) => {
     try {

@@ -103,7 +103,7 @@ const Header = () => {
                 </Button>
               </Link>
               <Link to="/register">
-                <Button className="bg-primary-600 hover:bg-primary-700 text-white">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600">
                   إنشاء حساب
                 </Button>
               </Link>

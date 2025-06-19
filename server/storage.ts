@@ -22,6 +22,7 @@ export interface IStorage {
   getExamsByTeacher(teacherId: string): Promise<Exam[]>;
   getActiveExams(): Promise<Exam[]>;
   getExamById(id: string): Promise<Exam | undefined>;
+  getExamByCode(code: string): Promise<Exam | undefined>;
   updateExam(id: string, updates: Partial<Exam>): Promise<Exam | undefined>;
   
   // Question management
@@ -69,8 +70,28 @@ export class SupabaseStorage implements IStorage {
 
   // Exam methods
   async createExam(exam: any): Promise<any> {
-    const { data } = await supabase.from('exams').insert(exam).select().single();
-    return data!;
+    try {
+      const { data, error } = await this.supabase.from('exams').insert({
+        id: exam.id,
+        title: exam.title,
+        description: exam.description,
+        duration_minutes: exam.duration_minutes,
+        teacher_id: exam.teacher_id,
+        is_active: exam.is_active,
+        code: exam.code,
+        start_time: exam.start_time,
+        end_time: exam.end_time
+      }).select().single();
+      
+      if (error) {
+        console.error('Error creating exam:', error);
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      console.error('Unexpected error creating exam:', error);
+      throw error;
+    }
   }
 
   async getExamsByTeacher(teacherId: string): Promise<any[]> {
@@ -79,13 +100,70 @@ export class SupabaseStorage implements IStorage {
   }
 
   async getActiveExams(): Promise<any[]> {
-    const { data } = await supabase.from('exams').select('*').eq('is_active', true).order('created_at', { ascending: false });
-    return data || [];
+    try {
+      const { data, error } = await this.supabase
+        .from('exams')
+        .select(`
+          *,
+          profiles!exams_teacher_id_fkey(full_name)
+        `)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching active exams:', error);
+        return [];
+      }
+      return data || [];
+    } catch (error) {
+      console.error('Unexpected error fetching active exams:', error);
+      return [];
+    }
   }
 
   async getExamById(id: string): Promise<any> {
-    const { data } = await supabase.from('exams').select('*').eq('id', id).single();
-    return data || undefined;
+    try {
+      const { data, error } = await this.supabase
+        .from('exams')
+        .select(`
+          *,
+          profiles!exams_teacher_id_fkey(full_name)
+        `)
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching exam by id:', error);
+        return null;
+      }
+      return data;
+    } catch (error) {
+      console.error('Unexpected error fetching exam by id:', error);
+      return null;
+    }
+  }
+
+  async getExamByCode(code: string): Promise<any> {
+    try {
+      const { data, error } = await this.supabase
+        .from('exams')
+        .select(`
+          *,
+          profiles!exams_teacher_id_fkey(full_name)
+        `)
+        .eq('code', code.toUpperCase())
+        .eq('is_active', true)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching exam by code:', error);
+        return null;
+      }
+      return data;
+    } catch (error) {
+      console.error('Unexpected error fetching exam by code:', error);
+      return null;
+    }
   }
 
   async updateExam(id: string, updates: any): Promise<any> {
@@ -95,24 +173,68 @@ export class SupabaseStorage implements IStorage {
 
   // Question methods
   async createQuestion(question: any): Promise<any> {
-    const { data } = await supabase.from('questions').insert(question).select().single();
-    return data!;
+    try {
+      const { data, error } = await this.supabase.from('questions').insert({
+        id: `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        exam_id: question.exam_id,
+        question_text: question.question_text,
+        question_type: question.question_type,
+        order_number: question.order_number
+      }).select().single();
+      
+      if (error) {
+        console.error('Error creating question:', error);
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      console.error('Unexpected error creating question:', error);
+      throw error;
+    }
   }
 
   async getQuestionsByExam(examId: string): Promise<any[]> {
-    const { data } = await supabase.from('questions').select('*').eq('exam_id', examId).order('order_number');
-    return data || [];
+    try {
+      const { data, error } = await this.supabase
+        .from('questions')
+        .select(`
+          *,
+          answer_choices(*)
+        `)
+        .eq('exam_id', examId)
+        .order('order_number');
+      
+      if (error) {
+        console.error('Error fetching questions:', error);
+        return [];
+      }
+      return data || [];
+    } catch (error) {
+      console.error('Unexpected error fetching questions:', error);
+      return [];
+    }
   }
 
   // Answer choice methods
   async createAnswerChoice(choice: { questionId: string; choiceText: string; isCorrect: boolean; orderNumber: number }) {
-    const { data } = await supabase.from('answer_choices').insert({
-      question_id: choice.questionId,
-      choice_text: choice.choiceText,
-      is_correct: choice.isCorrect,
-      order_number: choice.orderNumber
-    }).select().single();
-    return data!;
+    try {
+      const { data, error } = await this.supabase.from('answer_choices').insert({
+        id: `ac_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        question_id: choice.questionId,
+        choice_text: choice.choiceText,
+        is_correct: choice.isCorrect,
+        order_number: choice.orderNumber
+      }).select().single();
+      
+      if (error) {
+        console.error('Error creating answer choice:', error);
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      console.error('Unexpected error creating answer choice:', error);
+      throw error;
+    }
   }
 
   async getAnswerChoicesByQuestion(questionId: string) {
