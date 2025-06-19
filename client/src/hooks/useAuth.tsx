@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   id: string;
@@ -36,11 +37,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for existing session
     const checkSession = async () => {
       try {
-        const session = localStorage.getItem('user_session');
-        if (session) {
-          const parsed = JSON.parse(session);
-          setUser(parsed.user);
-          setUserProfile(parsed.userProfile);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser(session.user);
+          // Get user profile
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          if (profile) {
+            setUserProfile({
+              id: profile.id,
+              fullName: profile.full_name,
+              role: profile.role,
+              createdAt: profile.created_at,
+              updatedAt: profile.updated_at
+            });
+          }
         }
       } catch (error) {
         console.error('Error checking session:', error);
@@ -50,35 +64,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        if (profile) {
+          setUserProfile({
+            id: profile.id,
+            fullName: profile.full_name,
+            role: profile.role,
+            createdAt: profile.created_at,
+            updatedAt: profile.updated_at
+          });
+        }
+      } else {
+        setUser(null);
+        setUserProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string, role: string) => {
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, fullName, role })
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            role: role
+          }
+        }
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        const newUser = { id: data.profile.id, email };
-        const newProfile = data.profile;
-        
-        setUser(newUser);
-        setUserProfile(newProfile);
-        
-        // Store session
-        localStorage.setItem('user_session', JSON.stringify({
-          user: newUser,
-          userProfile: newProfile
-        }));
-
-        return {};
-      } else {
-        return { error: { message: data.error || 'Registration failed' } };
+      if (error) {
+        toast.error(error.message);
+        return { error: { message: error.message } };
       }
+
+      return {};
     } catch (error) {
       return { error: { message: 'Network error occurred' } };
     }
@@ -86,46 +118,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string) => {
     try {
-      // For demo purposes, create a session based on email
-      const mockProfile: UserProfile = {
-        id: `user_${Date.now()}`,
-        fullName: email.split('@')[0],
-        role: email.includes('teacher') ? 'teacher' : email.includes('admin') ? 'admin' : 'student',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      const mockUser: User = {
-        id: mockProfile.id,
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        user_metadata: { role: mockProfile.role }
-      };
+        password
+      });
 
-      setUser(mockUser);
-      setUserProfile(mockProfile);
+      if (error) {
+        if (error.message === 'ACCOUNT_PENDING_APPROVAL') {
+          return { error: { message: 'ACCOUNT_PENDING_APPROVAL' } };
+        }
+        toast.error(error.message);
+        return { error: { message: error.message } };
+      }
 
-      // Store session
-      localStorage.setItem('user_session', JSON.stringify({
-        user: mockUser,
-        userProfile: mockProfile
-      }));
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
 
-      return { userProfile: mockProfile };
+        if (profile) {
+          const userProfile = {
+            id: profile.id,
+            fullName: profile.full_name,
+            role: profile.role,
+            createdAt: profile.created_at,
+            updatedAt: profile.updated_at
+          };
+          return { userProfile };
+        }
+      }
+
+      return {};
     } catch (error) {
       return { error: { message: 'Login failed' } };
     }
   };
 
   const signOut = async () => {
+    await supabase.auth.signOut();
     setUser(null);
     setUserProfile(null);
-    localStorage.removeItem('user_session');
   };
 
   const resetPassword = async (email: string) => {
-    // Mock password reset
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return {};
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    return { error };
   };
 
   const value = {

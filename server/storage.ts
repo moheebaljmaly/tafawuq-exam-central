@@ -1,14 +1,10 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import { 
-  users, profiles, exams, questions, answerChoices, examAttempts, studentAnswers,
-  type User, type InsertUser, type Profile, type Exam, type Question
-} from "@shared/schema";
-import { eq, and, desc } from 'drizzle-orm';
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from '../client/src/integrations/supabase/types';
 
-const connectionString = process.env.DATABASE_URL!;
-const client = postgres(connectionString);
-export const db = drizzle(client);
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export interface IStorage {
   // User management
@@ -45,103 +41,125 @@ export interface IStorage {
   saveStudentAnswer(answer: { attemptId: string; questionId: string; selectedChoiceId?: string; answerText?: string }): Promise<any>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class SupabaseStorage implements IStorage {
   // Legacy user methods
   async getUser(id: number): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
-    return result[0];
+    const { data } = await supabase.from('users').select('*').eq('id', id).single();
+    return data || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const result = await db.select().from(users).where(eq(users.username, username)).limit(1);
-    return result[0];
+    const { data } = await supabase.from('users').select('*').eq('username', username).single();
+    return data || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const result = await db.insert(users).values(insertUser).returning();
-    return result[0];
+    const { data } = await supabase.from('users').insert(insertUser).select().single();
+    return data!;
   }
 
   // Profile methods
-  async createProfile(profile: { id: string; fullName: string; role: 'student' | 'teacher' | 'admin' }): Promise<Profile> {
-    const result = await db.insert(profiles).values(profile).returning();
-    return result[0];
+  async createProfile(profile: { id: string; fullName: string; role: 'student' | 'teacher' | 'admin' }): Promise<any> {
+    const { data } = await supabase.from('profiles').insert({
+      id: profile.id,
+      full_name: profile.fullName,
+      role: profile.role
+    }).select().single();
+    return data!;
   }
 
-  async getProfileById(id: string): Promise<Profile | undefined> {
-    const result = await db.select().from(profiles).where(eq(profiles.id, id)).limit(1);
-    return result[0];
+  async getProfileById(id: string): Promise<any> {
+    const { data } = await supabase.from('profiles').select('*').eq('id', id).single();
+    return data || undefined;
   }
 
-  async updateProfile(id: string, updates: Partial<Profile>): Promise<Profile | undefined> {
-    const result = await db.update(profiles).set(updates).where(eq(profiles.id, id)).returning();
-    return result[0];
+  async updateProfile(id: string, updates: any): Promise<any> {
+    const { data } = await supabase.from('profiles').update(updates).eq('id', id).select().single();
+    return data || undefined;
   }
 
   // Exam methods
-  async createExam(exam: Omit<Exam, 'id' | 'createdAt' | 'updatedAt'>): Promise<Exam> {
-    const result = await db.insert(exams).values(exam).returning();
-    return result[0];
+  async createExam(exam: any): Promise<any> {
+    const { data } = await supabase.from('exams').insert(exam).select().single();
+    return data!;
   }
 
-  async getExamsByTeacher(teacherId: string): Promise<Exam[]> {
-    return await db.select().from(exams).where(eq(exams.teacherId, teacherId)).orderBy(desc(exams.createdAt));
+  async getExamsByTeacher(teacherId: string): Promise<any[]> {
+    const { data } = await supabase.from('exams').select('*').eq('teacher_id', teacherId).order('created_at', { ascending: false });
+    return data || [];
   }
 
-  async getActiveExams(): Promise<Exam[]> {
-    return await db.select().from(exams).where(eq(exams.isActive, true)).orderBy(desc(exams.createdAt));
+  async getActiveExams(): Promise<any[]> {
+    const { data } = await supabase.from('exams').select('*').eq('is_active', true).order('created_at', { ascending: false });
+    return data || [];
   }
 
-  async getExamById(id: string): Promise<Exam | undefined> {
-    const result = await db.select().from(exams).where(eq(exams.id, id)).limit(1);
-    return result[0];
+  async getExamById(id: string): Promise<any> {
+    const { data } = await supabase.from('exams').select('*').eq('id', id).single();
+    return data || undefined;
   }
 
-  async updateExam(id: string, updates: Partial<Exam>): Promise<Exam | undefined> {
-    const result = await db.update(exams).set(updates).where(eq(exams.id, id)).returning();
-    return result[0];
+  async updateExam(id: string, updates: any): Promise<any> {
+    const { data } = await supabase.from('exams').update(updates).eq('id', id).select().single();
+    return data || undefined;
   }
 
   // Question methods
-  async createQuestion(question: Omit<Question, 'id' | 'createdAt'>): Promise<Question> {
-    const result = await db.insert(questions).values(question).returning();
-    return result[0];
+  async createQuestion(question: any): Promise<any> {
+    const { data } = await supabase.from('questions').insert(question).select().single();
+    return data!;
   }
 
-  async getQuestionsByExam(examId: string): Promise<Question[]> {
-    return await db.select().from(questions).where(eq(questions.examId, examId)).orderBy(questions.orderNumber);
+  async getQuestionsByExam(examId: string): Promise<any[]> {
+    const { data } = await supabase.from('questions').select('*').eq('exam_id', examId).order('order_number');
+    return data || [];
   }
 
   // Answer choice methods
   async createAnswerChoice(choice: { questionId: string; choiceText: string; isCorrect: boolean; orderNumber: number }) {
-    const result = await db.insert(answerChoices).values(choice).returning();
-    return result[0];
+    const { data } = await supabase.from('answer_choices').insert({
+      question_id: choice.questionId,
+      choice_text: choice.choiceText,
+      is_correct: choice.isCorrect,
+      order_number: choice.orderNumber
+    }).select().single();
+    return data!;
   }
 
   async getAnswerChoicesByQuestion(questionId: string) {
-    return await db.select().from(answerChoices).where(eq(answerChoices.questionId, questionId)).orderBy(answerChoices.orderNumber);
+    const { data } = await supabase.from('answer_choices').select('*').eq('question_id', questionId).order('order_number');
+    return data || [];
   }
 
   // Exam attempt methods
   async createExamAttempt(attempt: { studentId: string; examId: string }) {
-    const result = await db.insert(examAttempts).values(attempt).returning();
-    return result[0];
+    const { data } = await supabase.from('exam_attempts').insert({
+      student_id: attempt.studentId,
+      exam_id: attempt.examId
+    }).select().single();
+    return data!;
   }
 
   async getExamAttemptsByStudent(studentId: string) {
-    return await db.select().from(examAttempts).where(eq(examAttempts.studentId, studentId)).orderBy(desc(examAttempts.startedAt));
+    const { data } = await supabase.from('exam_attempts').select('*').eq('student_id', studentId).order('started_at', { ascending: false });
+    return data || [];
   }
 
   async updateExamAttempt(id: string, updates: any) {
-    const result = await db.update(examAttempts).set(updates).where(eq(examAttempts.id, id)).returning();
-    return result[0];
+    const { data } = await supabase.from('exam_attempts').update(updates).eq('id', id).select().single();
+    return data || undefined;
   }
 
   // Student answer methods
   async saveStudentAnswer(answer: { attemptId: string; questionId: string; selectedChoiceId?: string; answerText?: string }) {
-    const result = await db.insert(studentAnswers).values(answer).returning();
-    return result[0];
+    const { data } = await supabase.from('student_answers').insert({
+      attempt_id: answer.attemptId,
+      question_id: answer.questionId,
+      selected_choice_id: answer.selectedChoiceId,
+      answer_text: answer.answerText
+    }).select().single();
+    return data!;
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new SupabaseStorage();
