@@ -1,8 +1,4 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-// We no longer need AuthProvider here, it's in main.tsx
-// import { AuthProvider } from './hooks/useAuth'; 
-// Toaster is also in main.tsx
-// import { Toaster } from './components/ui/sonner';
 
 // General Pages
 import LogoutPage from './pages/Logout';
@@ -97,7 +93,6 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  // The App component now only needs to provide the router.
   return <RouterProvider router={router} />;
 }
 
