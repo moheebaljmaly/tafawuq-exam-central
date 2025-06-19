@@ -22,60 +22,9 @@ const CompletedExams = () => {
     }
   });
 
-  const completedExams = [
-    {
-      id: 1,
-      title: "امتحان الرياضيات - نهاية الفصل",
-      subject: "الرياضيات",
-      completedDate: "2025-06-15",
-      score: 85,
-      totalScore: 100,
-      duration: 120,
-      questions: 50,
-      grade: "A",
-      status: "graded"
-    },
-    {
-      id: 2,
-      title: "امتحان الفيزياء التطبيقية",
-      subject: "الفيزياء",
-      completedDate: "2025-06-10",
-      score: 92,
-      totalScore: 100,
-      duration: 90,
-      questions: 40,
-      grade: "A+",
-      status: "graded"
-    },
-    {
-      id: 3,
-      title: "امتحان الكيمياء العضوية",
-      subject: "الكيمياء",
-      completedDate: "2025-06-08",
-      score: 78,
-      totalScore: 100,
-      duration: 100,
-      questions: 45,
-      grade: "B+",
-      status: "graded"
-    },
-    {
-      id: 4,
-      title: "امتحان التاريخ الحديث",
-      subject: "التاريخ",
-      completedDate: "2025-06-05",
-      score: null,
-      totalScore: 100,
-      duration: 60,
-      questions: 30,
-      grade: null,
-      status: "pending"
-    }
-  ];
-
-  const filteredExams = completedExams.filter(exam =>
-    exam.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    exam.subject.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredExams = exams.filter(exam =>
+    exam.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    exam.subject?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getGradeBadge = (grade: string | null, status: string) => {

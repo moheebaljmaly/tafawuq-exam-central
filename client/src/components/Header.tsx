@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const Header = () => {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const [userName, setUserName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -30,9 +30,14 @@ const Header = () => {
     setIsLoading(false);
   }, [user, userProfile]);
 
-  const handleSignOut = () => {
-    // ببساطة قم بالتوجيه إلى صفحة تسجيل الخروج المخصصة
-    navigate('/logout');
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // في حالة فشل تسجيل الخروج، انتقل للصفحة الرئيسية
+      window.location.href = "/";
+    }
   };
 
   const handleDashboardClick = () => {

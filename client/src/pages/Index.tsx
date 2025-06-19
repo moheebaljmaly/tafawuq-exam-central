@@ -41,20 +41,29 @@ const Index = () => {
         const { data } = await supabase.auth.getSession();
         
         if (data.session) {
-          console.log('User is authenticated, redirecting to dashboard');
+          console.log('User is authenticated, checking profile...');
           
-          // تحقق من دور المستخدم للتوجيه الصحيح
-          const userRole = data.session.user?.user_metadata?.role || 'student';
+          // الحصول على بيانات المستخدم من قاعدة البيانات
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.session.user.id)
+            .single();
           
-          // استخدام navigate بدلاً من window.location.replace لتجربة مستخدم أفضل
-          if (userRole === 'admin') {
-            navigate('/admin-dashboard');
-          } else if (userRole === 'teacher') {
-            console.log('Redirecting teacher to teacher dashboard');
-            navigate('/teacher-dashboard');
+          if (profile) {
+            const userRole = profile.role;
+            console.log('User role:', userRole);
+            
+            // التوجيه حسب الدور
+            if (userRole === 'admin') {
+              navigate('/admin-dashboard');
+            } else if (userRole === 'teacher') {
+              navigate('/teacher-dashboard');
+            } else {
+              navigate('/student-dashboard');
+            }
           } else {
-            console.log('Redirecting student to student dashboard');
-            navigate('/student-dashboard');
+            console.log('No profile found, staying on home page');
           }
         } else {
           console.log('No authenticated session found, staying on home page');
@@ -69,19 +78,27 @@ const Index = () => {
     checkAuth();
   }, [navigate]);
 
-  // عرض محتوى الصفحة الرئيسية دائمًا، والتوجيه سيتم من خلال useEffect إذا كان المستخدم مصادقًا
+  // عرض شاشة التحميل أثناء فحص المصادقة
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-lg">جاري التحقق من الجلسة...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // عرض محتوى الصفحة الرئيسية
   return (
     <div className="min-h-screen">
       <Header />
-      {!isCheckingAuth && (
-        <>
-          <HeroSection userCount={userCount} />
-          <FeaturesSection />
-          <TestimonialsSection />
-          <PricingSection />
-          <Footer />
-        </>
-      )}
+      <HeroSection userCount={userCount} />
+      <FeaturesSection />
+      <TestimonialsSection />
+      <PricingSection />
+      <Footer />
     </div>
   );
 };

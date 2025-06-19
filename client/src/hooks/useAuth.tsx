@@ -157,9 +157,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setUserProfile(null);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setUserProfile(null);
+      
+      // مسح البيانات المحلية
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // إعادة توجيه للصفحة الرئيسية
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      // حتى لو فشل تسجيل الخروج، انتقل للصفحة الرئيسية
+      window.location.href = "/";
+    }
   };
 
   const resetPassword = async (email: string) => {
