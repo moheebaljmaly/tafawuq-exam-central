@@ -17,14 +17,13 @@ const Index = () => {
   useEffect(() => {
     const fetchUserCount = async () => {
       try {
-        const { data, error } = await supabase.rpc('get_total_users_count');
+        const { count, error } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
         if (error) {
           console.error("Error fetching user count:", error);
-          // Don't bother the user with a toast for this
           return;
         }
-        if (data) {
-          setUserCount(data);
+        if (count !== null) {
+          setUserCount(count);
         }
       } catch (error) {
         console.error("Unexpected error fetching user count:", error);

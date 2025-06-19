@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../client/src/integrations/supabase/types';
+import type { 
+  Profile, Exam, Question, 
+  InsertProfile, InsertExam, InsertQuestion 
+} from '../shared/schema';
 
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -7,15 +11,11 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 export interface IStorage {
-  // User management
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  
-  // Profile management
+  // Profile management (replaces user management)
   createProfile(profile: { id: string; fullName: string; role: 'student' | 'teacher' | 'admin' }): Promise<Profile>;
   getProfileById(id: string): Promise<Profile | undefined>;
   updateProfile(id: string, updates: Partial<Profile>): Promise<Profile | undefined>;
+  getAllProfiles(): Promise<Profile[]>;
   
   // Exam management
   createExam(exam: Omit<Exam, 'id' | 'createdAt' | 'updatedAt'>): Promise<Exam>;
@@ -42,22 +42,6 @@ export interface IStorage {
 }
 
 export class SupabaseStorage implements IStorage {
-  // Legacy user methods
-  async getUser(id: number): Promise<User | undefined> {
-    const { data } = await supabase.from('users').select('*').eq('id', id).single();
-    return data || undefined;
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const { data } = await supabase.from('users').select('*').eq('username', username).single();
-    return data || undefined;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const { data } = await supabase.from('users').insert(insertUser).select().single();
-    return data!;
-  }
-
   // Profile methods
   async createProfile(profile: { id: string; fullName: string; role: 'student' | 'teacher' | 'admin' }): Promise<any> {
     const { data } = await supabase.from('profiles').insert({
@@ -76,6 +60,11 @@ export class SupabaseStorage implements IStorage {
   async updateProfile(id: string, updates: any): Promise<any> {
     const { data } = await supabase.from('profiles').update(updates).eq('id', id).select().single();
     return data || undefined;
+  }
+
+  async getAllProfiles(): Promise<any[]> {
+    const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+    return data || [];
   }
 
   // Exam methods
