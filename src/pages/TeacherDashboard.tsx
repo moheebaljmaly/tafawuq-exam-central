@@ -1,209 +1,196 @@
-
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { 
-  GraduationCap, 
-  Plus, 
-  Users, 
-  FileText, 
-  TrendingUp, 
+import {
+  Bell,
+  BookOpen,
+  FilePlus2,
+  Home,
+  LifeBuoy,
+  ListChecks,
+  Monitor,
+  PieChart,
   Settings,
-  Search,
-  Calendar,
-  Clock,
-  Award,
-  LogOut
+  User,
+  Users,
+  LogOut,
+  GraduationCap
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 const TeacherDashboard = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const { userProfile } = useAuth();
+  const navigate = useNavigate();
 
-  // Mock data
-  const stats = [
-    { title: "إجمالي الامتحانات", value: "24", icon: FileText, color: "bg-blue-500" },
-    { title: "الطلاب المسجلين", value: "156", icon: Users, color: "bg-green-500" },
-    { title: "معدل النجاح", value: "87%", icon: TrendingUp, color: "bg-purple-500" },
-    { title: "الامتحانات النشطة", value: "3", icon: Clock, color: "bg-orange-500" }
+  const handleSignOut = () => {
+    navigate('/logout');
+  };
+
+  const navLinks = [
+    { to: "/teacher-dashboard", icon: Home, label: "نظرة عامة" },
+    { to: "/teacher-dashboard/create-exam", icon: FilePlus2, label: "إنشاء امتحان جديد" },
+    { to: "/teacher-dashboard/manage-exams", icon: ListChecks, label: "إدارة الامتحانات" },
+    { to: "/teacher-dashboard/question-bank", icon: BookOpen, label: "بنك الأسئلة" },
+    { to: "/teacher-dashboard/manage-students", icon: Users, label: "إدارة الطلاب / الفصول" },
+    { to: "/teacher-dashboard/live-proctoring", icon: Monitor, label: "مراقبة الامتحانات" },
+    { to: "/teacher-dashboard/results-analysis", icon: PieChart, label: "تحليل النتائج" },
   ];
 
-  const recentExams = [
-    {
-      id: 1,
-      title: "امتحان الرياضيات - الفصل الأول",
-      subject: "رياضيات",
-      students: 32,
-      status: "نشط",
-      date: "2024-01-15",
-      code: "MTH001"
-    },
-    {
-      id: 2,
-      title: "اختبار الفيزياء التطبيقية",
-      subject: "فيزياء",
-      students: 28,
-      status: "مكتمل",
-      date: "2024-01-12",
-      code: "PHY002"
-    },
-    {
-      id: 3,
-      title: "امتحان الكيمياء العضوية",
-      subject: "كيمياء",
-      students: 25,
-      status: "قريباً",
-      date: "2024-01-20",
-      code: "CHM003"
-    }
+  const secondaryNavLinks = [
+    { to: "/teacher-dashboard/profile", icon: User, label: "الملف الشخصي" },
+    { to: "/teacher-dashboard/settings", icon: Settings, label: "الإعدادات" },
+    { to: "/teacher-dashboard/help", icon: LifeBuoy, label: "المساعدة" },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center">
-                <span className="text-2xl font-bold text-primary-700 mr-2">تفوق</span>
-                <GraduationCap className="h-8 w-8 text-primary-600" />
-              </div>
-              <div className="hidden md:block">
-                <h1 className="text-xl font-semibold text-gray-900">لوحة تحكم المعلم</h1>
-              </div>
+    <TooltipProvider delayDuration={0}>
+      <div className="flex h-screen w-full bg-background text-foreground" dir="rtl">
+        <ResizablePanelGroup direction="horizontal" className="h-full max-w-full rounded-lg border">
+          <ResizablePanel defaultSize={20} minSize={15} maxSize={25} className="!overflow-y-auto">
+            <Sidebar navLinks={navLinks} secondaryNavLinks={secondaryNavLinks} />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={80} className="!overflow-y-auto">
+            <div className="flex flex-col h-full">
+              <DashboardHeader userProfile={userProfile} onSignOut={handleSignOut} />
+              <main className="flex-1 p-6">
+                <Outlet />
+              </main>
             </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">د. أحمد محمد</p>
-                <p className="text-xs text-gray-500">معلم رياضيات</p>
-              </div>
-              <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                <span className="text-primary-700 font-semibold">أ</span>
-              </div>
-              <Button variant="ghost" size="sm">
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="p-6">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">مرحباً بك، د. أحمد</h2>
-          <p className="text-gray-600">إليك نظرة عامة على أنشطتك التعليمية اليوم</p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <Card key={index} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-full ${stat.color}`}>
-                    <stat.icon className="h-6 w-6 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Button className="bg-primary-600 hover:bg-primary-700 h-16 text-lg">
-            <Plus className="ml-2 h-6 w-6" />
-            إنشاء امتحان جديد
-          </Button>
-          <Button variant="outline" className="h-16 text-lg">
-            <Users className="ml-2 h-6 w-6" />
-            إدارة الطلاب
-          </Button>
-          <Button variant="outline" className="h-16 text-lg">
-            <TrendingUp className="ml-2 h-6 w-6" />
-            التقارير والإحصائيات
-          </Button>
-          <Button variant="outline" className="h-16 text-lg">
-            <Settings className="ml-2 h-6 w-6" />
-            الإعدادات
-          </Button>
-        </div>
-
-        {/* Recent Exams */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl">الامتحانات الأخيرة</CardTitle>
-              <div className="flex items-center space-x-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="بحث في الامتحانات..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-64"
-                  />
-                </div>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentExams.map((exam) => (
-                <div key={exam.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-primary-600" />
-                    </div>
-                    <div className="text-right">
-                      <h3 className="font-semibold text-gray-900">{exam.title}</h3>
-                      <div className="flex items-center space-x-4 mt-1">
-                        <span className="text-sm text-gray-500">{exam.subject}</span>
-                        <span className="text-sm text-gray-500">كود: {exam.code}</span>
-                        <div className="flex items-center">
-                          <Users className="h-4 w-4 text-gray-400 ml-1" />
-                          <span className="text-sm text-gray-500">{exam.students} طالب</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <Badge 
-                      variant={exam.status === 'نشط' ? 'default' : exam.status === 'مكتمل' ? 'secondary' : 'outline'}
-                      className={
-                        exam.status === 'نشط' ? 'bg-green-100 text-green-800' :
-                        exam.status === 'مكتمل' ? 'bg-blue-100 text-blue-800' :
-                        'bg-orange-100 text-orange-800'
-                      }
-                    >
-                      {exam.status}
-                    </Badge>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Calendar className="h-4 w-4 ml-1" />
-                      {exam.date}
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      عرض التفاصيل
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
+
+const Sidebar = ({ navLinks, secondaryNavLinks }) => {
+  const location = useLocation();
+
+  const isActive = (path) => location.pathname === path;
+
+  return (
+    <div className="flex h-full flex-col gap-2 p-4">
+      <div className="flex h-16 items-center justify-center rounded-lg bg-card">
+        <GraduationCap className="h-8 w-8 text-primary" />
+        <h1 className="text-xl font-bold text-primary px-2">تفوق</h1>
+      </div>
+      <nav className="flex flex-col gap-1 text-base font-medium">
+        {navLinks.map((link) => (
+          <Tooltip key={link.to}>
+            <TooltipTrigger asChild>
+              <NavLink
+                to={link.to}
+                className={cn(
+                  "flex items-center gap-4 rounded-lg px-4 py-2.5 transition-colors",
+                  isActive(link.to)
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted"
+                )}
+              >
+                <link.icon className="h-5 w-5" />
+                <span>{link.label}</span>
+              </NavLink>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="bg-foreground text-background">
+              {link.label}
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </nav>
+      <nav className="mt-auto flex flex-col gap-1 text-base font-medium">
+        {secondaryNavLinks.map((link) => (
+          <Tooltip key={link.to}>
+            <TooltipTrigger asChild>
+              <NavLink
+                to={link.to}
+                className={cn(
+                  "flex items-center gap-4 rounded-lg px-4 py-2.5 transition-colors",
+                  isActive(link.to)
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted"
+                )}
+              >
+                <link.icon className="h-5 w-5" />
+                <span>{link.label}</span>
+              </NavLink>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="bg-foreground text-background">
+              {link.label}
+            </TooltipContent>
+          </Tooltip>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+const DashboardHeader = ({ userProfile, onSignOut }) => {
+  const location = useLocation();
+  const getPageTitle = () => {
+    const path = location.pathname.split('/').pop();
+    switch (path) {
+      case 'teacher-dashboard': return 'لوحة تحكم المعلم';
+      case 'overview': return 'نظرة عامة';
+      case 'create-exam': return 'إنشاء امتحان جديد';
+      case 'manage-exams': return 'إدارة الامتحانات';
+      case 'question-bank': return 'بنك الأسئلة';
+      case 'manage-students': return 'إدارة الطلاب / الفصول';
+      case 'live-proctoring': return 'مراقبة الامتحانات';
+      case 'results-analysis': return 'تحليل النتائج';
+      case 'profile': return 'الملف الشخصي';
+      case 'settings': return 'الإعدادات';
+      case 'help': return 'المساعدة';
+      default: return getPageTitleFromPath(path);
+    }
+  };
+
+  const getPageTitleFromPath = (path) => {
+    const segments = path.split('/').filter(Boolean); // Filter out empty strings
+    if (segments.length > 1) {
+        const lastSegment = segments[segments.length - 1];
+        // Convert kebab-case or snake_case to Title Case
+        return lastSegment.replace(/[-_]/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+    }
+    return 'لوحة تحكم المعلم'; // Default title
+  };
+
+  return (
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-card px-6">
+      <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
+      <div className="flex flex-1 items-center justify-end gap-4">
+        <Button variant="ghost" size="icon" className="relative">
+          <Bell className="h-5 w-5" />
+          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+          </span>
+        </Button>
+        <div className="flex items-center gap-2 text-right">
+          <div>
+            <p className="text-sm font-medium">{userProfile?.full_name || 'معلم'}</p>
+            <p className="text-xs text-muted-foreground">معلم</p>
+          </div>
+          <div className="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold">
+            {userProfile?.full_name?.charAt(0)?.toUpperCase() || 'T'}
+          </div>
+        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" onClick={onSignOut}>
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="bg-foreground text-background">
+            <p>تسجيل الخروج</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    </header>
+  );
+}
 
 export default TeacherDashboard;

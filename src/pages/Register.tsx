@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -61,24 +62,41 @@ const Register = () => {
 
     setLoading(true);
     
-    const { error } = await signUp(
-      formData.email,
-      formData.password,
-      formData.fullName,
-      formData.role
-    );
+    try {
+      // 1. استدعاء دالة التسجيل
+      const { error } = await signUp(
+        formData.email,
+        formData.password,
+        formData.fullName,
+        formData.role
+      );
 
-    setLoading(false);
+      if (error) {
+        // إذا حدث خطأ (مثل البريد الإلكتروني مستخدم بالفعل)، أظهره للمستخدم
+        toast.error(error.message);
+        setLoading(false);
+        return;
+      }
 
-    if (!error) {
+      // 2. تم التسجيل بنجاح
+      // لا حاجة لـ signInWithPassword هنا، Supabase يعالج الجلسة تلقائيًا إذا تم تعطيل تأكيد البريد الإلكتروني.
+      
+      // 3. توجيه المستخدم
       if (formData.role === 'student') {
-        // Redirect students directly to the app
-        navigate('/');
+        toast.success("تم إنشاء حسابك بنجاح! جاري توجيهك...");
+        // استخدام window.location.replace يضمن إعادة تحميل كاملة للتطبيق، مما يساعد على تحديث حالة المصادقة بشكل صحيح
+        window.location.replace('/student-dashboard');
       } else {
-        // Show approval message for teachers and redirect to login
+        toast.info("تم تسجيل حسابك كمعلم. سيتم مراجعته من قبل الإدارة.");
         navigate('/teacher-pending-approval');
       }
+
+    } catch (err) {
+      console.error("An unexpected error occurred during registration:", err);
+      toast.error("حدث خطأ غير متوقع. الرجاء المحاولة مرة أخرى.");
+      setLoading(false);
     }
+    // لا تقم بتعيين setLoading(false) هنا لأن الصفحة سيتم إعادة تحميلها
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,7 +118,12 @@ const Register = () => {
             <GraduationCap className="h-12 w-12 text-primary-600" />
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">إنشاء حساب جديد</CardTitle>
-          <CardDescription>انضم إلى منصة تفوق للاختبارات الإلكترونية</CardDescription>
+          <CardDescription>انضم إلى منصة تفوق الآن</CardDescription>
+          <div className="mt-2">
+            <Link to="/" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+              العودة إلى الصفحة الرئيسية
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

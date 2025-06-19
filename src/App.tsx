@@ -1,48 +1,104 @@
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+// We no longer need AuthProvider here, it's in main.tsx
+// import { AuthProvider } from './hooks/useAuth'; 
+// Toaster is also in main.tsx
+// import { Toaster } from './components/ui/sonner';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import TeacherDashboard from "./pages/TeacherDashboard";
-import TeacherPendingApproval from "./pages/TeacherPendingApproval";
-import NotFound from "./pages/NotFound";
+// General Pages
+import LogoutPage from './pages/Logout';
+import LandingPage from './pages/Index';
+import Login from './pages/Login';
+import Signup from './pages/Register';
+import ErrorPage from './pages/NotFound';
+import TakeExam from './pages/TakeExam';
 
-const queryClient = new QueryClient();
+// Dashboard Layouts
+import StudentDashboard from './pages/StudentDashboard';
+import TeacherDashboard from './pages/TeacherDashboard';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/teacher-pending-approval" element={<TeacherPendingApproval />} />
-            <Route 
-              path="/teacher-dashboard" 
-              element={
-                <ProtectedRoute requiredRole="teacher">
-                  <TeacherDashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+// Student Pages
+import StudentOverview from './pages/dashboards/student/Overview';
+import AvailableExams from './pages/dashboards/student/AvailableExams';
+import CompletedExams from './pages/dashboards/student/CompletedExams';
+import StudentProfile from './pages/dashboards/student/Profile';
+import StudentSettings from './pages/dashboards/student/Settings';
+import StudentHelp from './pages/dashboards/student/Help';
+import ExamResult from './pages/ExamResult';
+import JoinExam from './pages/dashboards/student/JoinExam';
+
+// Teacher Pages
+import TeacherOverview from './pages/dashboards/teacher/TeacherOverview';
+import CreateExam from './pages/dashboards/teacher/CreateExam';
+import ManageExams from './pages/dashboards/teacher/ManageExams';
+import EditExam from './pages/dashboards/teacher/EditExam';
+import ExamDetails from './pages/dashboards/teacher/ExamDetails';
+import QuestionBank from './pages/dashboards/teacher/QuestionBank';
+import ManageStudents from './pages/dashboards/teacher/ManageStudents';
+import LiveProctoring from './pages/dashboards/teacher/LiveProctoring';
+import ResultsAnalysis from './pages/dashboards/teacher/ResultsAnalysis';
+import Profile from './pages/dashboards/teacher/Profile';
+import Settings from './pages/dashboards/teacher/Settings';
+import TeacherHelp from './pages/dashboards/teacher/Help';
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <LandingPage />,
+    errorElement: <ErrorPage />,
+  },
+  {
+    path: '/login',
+    element: <Login />,
+  },
+  {
+    path: '/signup',
+    element: <Signup />,
+  },
+  {
+    path: '/logout',
+    element: <LogoutPage />,
+  },
+  {
+    path: '/student-dashboard',
+    element: <StudentDashboard />,
+    children: [
+      { path: '', element: <StudentOverview /> },
+      { path: 'available-exams', element: <AvailableExams /> },
+      { path: 'join-exam', element: <JoinExam /> },
+      { path: 'completed-exams', element: <CompletedExams /> },
+      { path: 'exam-result/:registrationId', element: <ExamResult /> },
+      { path: 'profile', element: <StudentProfile /> },
+      { path: 'settings', element: <StudentSettings /> },
+      { path: 'help', element: <StudentHelp /> },
+    ],
+  },
+  {
+    path: '/teacher-dashboard',
+    element: <TeacherDashboard />,
+    children: [
+      { path: '', element: <TeacherOverview /> },
+      { path: 'create-exam', element: <CreateExam /> },
+      { path: 'manage-exams', element: <ManageExams /> },
+      { path: 'edit-exam/:id', element: <EditExam /> },
+      { path: 'exam-details/:id', element: <ExamDetails /> },
+      { path: 'question-bank', element: <QuestionBank /> },
+      { path: 'manage-students', element: <ManageStudents /> },
+      { path: 'live-proctoring', element: <LiveProctoring /> },
+      { path: 'results-analysis', element: <ResultsAnalysis /> },
+      { path: 'profile', element: <Profile /> },
+      { path: 'settings', element: <Settings /> },
+      { path: 'help', element: <TeacherHelp /> },
+    ],
+  },
+  {
+    path: '/take-exam/:id',
+    element: <TakeExam />,
+  },
+]);
+
+function App() {
+  // The App component now only needs to provide the router.
+  return <RouterProvider router={router} />;
+}
 
 export default App;

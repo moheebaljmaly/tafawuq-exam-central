@@ -1,9 +1,12 @@
-
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle, Users, Target } from "lucide-react";
 
-const HeroSection = () => {
+interface HeroSectionProps {
+  userCount: number;
+}
+
+const HeroSection = ({ userCount }: HeroSectionProps) => {
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-primary-50 to-secondary-50 py-20">
       <div className="container mx-auto px-4">
@@ -27,18 +30,21 @@ const HeroSection = () => {
               </Button>
             </div>
             
-            <div className="flex items-center space-x-8 text-sm text-gray-600">
-              <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-secondary-600 ml-2" />
-                <span>آمن ومضمون</span>
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+              <div className="bg-white/50 backdrop-blur-sm rounded-lg p-4 shadow-sm">
+                <Users className="h-8 w-8 text-primary-600 mx-auto mb-2" />
+                <p className="text-xl font-bold">{userCount.toLocaleString()}+</p>
+                <p className="text-sm text-gray-600">مستخدم مسجل</p>
               </div>
-              <div className="flex items-center">
-                <Users className="h-5 w-5 text-secondary-600 ml-2" />
-                <span>للطلاب والمعلمين</span>
+              <div className="bg-white/50 backdrop-blur-sm rounded-lg p-4 shadow-sm">
+                <Target className="h-8 w-8 text-primary-600 mx-auto mb-2" />
+                <p className="text-xl font-bold">نتائج فورية</p>
+                <p className="text-sm text-gray-600">تحليلات دقيقة</p>
               </div>
-              <div className="flex items-center">
-                <Target className="h-5 w-5 text-secondary-600 ml-2" />
-                <span>نتائج فورية</span>
+              <div className="bg-white/50 backdrop-blur-sm rounded-lg p-4 shadow-sm">
+                <CheckCircle className="h-8 w-8 text-primary-600 mx-auto mb-2" />
+                <p className="text-xl font-bold">آمن وموثوق</p>
+                <p className="text-sm text-gray-600">خصوصيتك أولويتنا</p>
               </div>
             </div>
           </div>

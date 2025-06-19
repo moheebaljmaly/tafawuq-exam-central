@@ -1,8 +1,5 @@
-
-import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,50 +7,40 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { user, userProfile, loading } = useAuth();
+  const { user, loading, userProfile } = useAuth();
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent"></div>
+        <p className="mr-4 text-gray-600">جاري التحقق...</p>
       </div>
     );
   }
 
   if (!user) {
+    // إذا لم يكن المستخدم مسجلاً، قم بتوجيهه إلى صفحة تسجيل الدخول
     return <Navigate to="/login" replace />;
   }
 
-  // Check if teacher account is pending approval
-  if (userProfile?.role === 'teacher' && !userProfile?.is_approved) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="bg-amber-100 p-3 rounded-full">
-                <AlertCircle className="h-12 w-12 text-amber-600" />
-              </div>
-            </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">حساب في انتظار الموافقة</CardTitle>
-            <CardDescription>لم يتم الموافقة على حساب المعلم بعد</CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-gray-600 mb-4">
-              حسابك كمعلم لا يزال قيد المراجعة من قبل المسؤول. 
-              يرجى انتظار الموافقة قبل الوصول إلى لوحة التحكم.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  // إذا كان هناك دور مطلوب والملف الشخصي للمستخدم تم تحميله
+  if (requiredRole && userProfile) {
+    const userRole = userProfile.role;
+    if (userRole !== requiredRole) {
+      // إذا كان الدور غير متطابق، قم بتوجيهه إلى لوحة التحكم الخاصة به
+      console.warn(`Access denied. User role '${userRole}' does not match required role '${requiredRole}'. Redirecting...`);
+      if (userRole === 'student') {
+        return <Navigate to="/student-dashboard" replace />;
+      }
+      if (userRole === 'teacher') {
+        return <Navigate to="/teacher-dashboard" replace />;
+      }
+      // كحل بديل، توجيه إلى الصفحة الرئيسية
+      return <Navigate to="/" replace />;
+    }
   }
 
-  // Check role requirements
-  if (requiredRole && userProfile?.role !== requiredRole) {
-    return <Navigate to="/" replace />;
-  }
-
+  // إذا كان المستخدم مسجلاً والدور متطابق (أو لا يوجد دور مطلوب)، اسمح بالوصول
   return <>{children}</>;
 };
 

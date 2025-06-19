@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { GraduationCap, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -25,12 +26,35 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signIn(formData.email, formData.password);
-    
+    // استخدام دالة signIn من useAuth لتسجيل الدخول
+    const { error, userProfile } = await signIn(formData.email, formData.password);
+
     setLoading(false);
 
-    if (!error) {
-      navigate('/teacher-dashboard');
+    if (error) {
+      if (error.message === 'ACCOUNT_PENDING_APPROVAL') {
+        // إذا كان الحساب قيد الموافقة، قم بتوجيهه إلى صفحة الانتظار
+        navigate('/teacher-pending-approval');
+      }
+      // بالنسبة للأخطاء الأخرى، سيتم عرض الرسالة من useAuth
+      return;
+    }
+
+    if (userProfile) {
+      toast.success("تم تسجيل الدخول بنجاح!");
+      // توجيه المستخدم بناءً على دوره
+      const userRole = userProfile.role || 'student';
+      if (userRole === 'admin') {
+        window.location.replace('/admin-dashboard');
+      } else if (userRole === 'teacher') {
+        window.location.replace('/teacher-dashboard');
+      } else {
+        window.location.replace('/student-dashboard');
+      }
+    } else {
+      // حالة احتياطية إذا لم يتم تحميل الملف الشخصي
+      toast.info("تم تسجيل الدخول، ولكن لم نتمكن من تحديد دورك. سيتم توجيهك الآن.");
+      window.location.replace('/student-dashboard');
     }
   };
 
@@ -50,6 +74,11 @@ const Login = () => {
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">تسجيل الدخول</CardTitle>
           <CardDescription>ادخل إلى حسابك في منصة تفوق</CardDescription>
+          <div className="mt-2">
+            <Link to="/" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+              العودة إلى الصفحة الرئيسية
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -111,7 +140,8 @@ const Login = () => {
 
             <Button
               type="submit"
-              className="w-full bg-primary-600 hover:bg-primary-700"
+              className="w-full"
+              variant="default"
               disabled={loading}
             >
               {loading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
